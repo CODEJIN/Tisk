@@ -6,5 +6,5 @@ This code is to run a TISK model on Python 3.x.
 
 This code require 'numpy', 'matplotlib' modules.
 
-pip install numpy
-pip install matplotlab
+<h6>pip install numpy</h6>
+<h6>pip install matplotlab</h6>
