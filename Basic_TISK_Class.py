@@ -334,9 +334,9 @@ class TISK_Model:
             rt_Time_Dependent_List.append(self.RT_Time_Dependent(pronunciation, word_Activation_Array, acc_Criteria[2]));
 
         if raw_Data:
-            output_Phoneme_Activation_Data = ["Target\tWord\tLocation\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
-            output_Diphone_Activation_Data = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
-            output_Single_Phone_Activation_Data = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+            output_Phoneme_Activation_Data = ["Target\tPhoneme\tPosition\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+            output_Diphone_Activation_Data = ["Target\tDiphone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+            output_Single_Phone_Activation_Data = ["Target\tSingle_Phone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
             output_Word_Activation_Data = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
 
             for pronunciation in sorted(pronunciation_List):
@@ -368,7 +368,7 @@ class TISK_Model:
                 fileStream.write("".join(output_Word_Activation_Data));
 
         if categorize:
-            output_Category_Activation_Average_Data = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+            output_Category_Activation_Average_Data = ["Target\tCategory\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
 
             for pronunciation in sorted(pronunciation_List):
                 pronunciation_Index = pronunciation_List.index(pronunciation);
@@ -610,7 +610,7 @@ class TISK_Model:
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Phoneme.txt", "w") as f:                    
-                    extract_Text = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+                    extract_Text = ["Target\tPhoneme\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
                     for index in range(len(extract_Phoneme_List)):
                         extract_Text.append(" ".join(pronunciation) + "\t" + str(extract_Phoneme_List[index]) + "\t");
                         extract_Text.append("\t".join([str(x) for x in activation_List[index]]));
@@ -626,7 +626,7 @@ class TISK_Model:
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Diphone.txt", "w") as f:
-                    extract_Text = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+                    extract_Text = ["Target\tDiphone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
                     for index in range(len(extract_Diphone_List)):
                         extract_Text.append(" ".join(pronunciation) + "\t" + str(extract_Diphone_List[index]) + "\t");
                         extract_Text.append("\t".join([str(x) for x in activation_List[index]]));
@@ -642,7 +642,7 @@ class TISK_Model:
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Single_Phone.txt", "w") as f:
-                    extract_Text = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+                    extract_Text = ["Target\tSingle_Phone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
                     for index in range(len(extract_Single_Phone_List)):
                         extract_Text.append(" ".join(pronunciation) + "\t" + str(extract_Single_Phone_List[index]) + "\t");
                         extract_Text.append("\t".join([str(x) for x in activation_List[index]]));
