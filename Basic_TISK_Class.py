@@ -1,9 +1,34 @@
-######################################################
-# TISK 1.x Distribution by Heejo You and James Magnuson
+#########################################################
+# TISK 1.x Distribution by Heejo You, based on code
+# developed by Thomas Hannagan implementing the original
+# TISK model (Hannagan, Magnuson & Grainger, 2013). This
+# distribution was re-implemented from scratch in 2016-17
+# in Jim Magnuson's lab at the University of Connecticut.
 #
-# This code is to run TISK 1.x.
-# You can see the tutorial in the short guide.
-######################################################
+# The most current version of the software should always
+# be available at https://github.com/CODEJIN/TISK
+#
+# The github repository includes a brief guide (PDF file)
+# to help get you started.
+#
+#
+# TISK 1.x Distribution
+# Copyright (C) 2017 Heejo You and James Magnuson
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#########################################################
 
 import numpy as np;
 import matplotlib.pyplot as plt;
