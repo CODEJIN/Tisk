@@ -35,20 +35,24 @@ import matplotlib.pyplot as plt;
 import time;
 import os;
 
-def List_Generate():
-    phoneme_List = [];
-    with open("Phoneme_Data.txt") as f:
-        readLines = f.readlines();
-        for readLine in readLines:
-            phoneme_List.append(readLine.replace("\n",""));
-            
+def List_Generate():    
     word_List = [];
     with open("Pronunciation_Data.txt") as f:
         readLines = f.readlines();
         for readLine in readLines:
             word_List.append(readLine.replace("\n",""));
 
-    return phoneme_List, word_List;
+    phoneme_Set = set();
+    for word in word_List:
+        phoneme_Set.update(set(word));
+
+    if os.path.isfile("Phoneme_Data.txt"):
+        with open("Phoneme_Data.txt") as f:
+            readLines = f.readlines();
+            for readLine in readLines:
+                phoneme_Set.add(readLine.replace("\n",""));
+
+    return list(phoneme_Set), word_List;
 
 class TISK_Model:
     def __init__(self, phoneme_List, word_List, time_Slot = None):
