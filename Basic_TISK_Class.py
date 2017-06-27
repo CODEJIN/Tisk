@@ -315,8 +315,7 @@ class TISK_Model:
 
         return np.nan;
 
-
-    def Run_List(self, pronunciation_List, acc_Criteria=(0.75, 0.05, 10), output_File_Name=None, raw_Data=False, categorize=False):
+    def Run_List(self, pronunciation_List, absolute_Acc_Criteria=0.75, relative_Acc_Criteria=0.05, time_Acc_Criteria=10, output_File_Name=None, raw_Data=False, categorize=False):
         """
         Export the raw data and categorized result about all pronunciations of inserted list.
 
@@ -325,8 +324,14 @@ class TISK_Model:
         pronunciation_List : list of string or string list
             The list or pronunciations. Each item should be a phoneme string of a list of phonemes.
 
-        criteria: tuple of float
-            The criteria for the calculation of reaction time and accuracy. Tuple should have three float value. The values are for the absolute threshold, relative threshold, time-dependent criteria, respectively.
+        absolute_Acc_Criteria: float
+            The criteria for the calculation of reaction time and accuracy. The value is for the absolute threshold.
+
+        relative_Acc_Criteria: float
+            The criteria for the calculation of reaction time and accuracy. The value is for the relative threshold.
+
+        time_Acc_Criteria: integer
+            The criteria for the calculation of reaction time and accuracy. The value is for the time-dependent criteria.
 
         output_File_Name: string, optional
             The prefix of export files.
@@ -359,9 +364,9 @@ class TISK_Model:
             single_Phone_Activation_Array_List.append(single_Phone_Activation_Array);
             word_Activation_Array_List.append(word_Activation_Array);
 
-            rt_Absolute_Threshold_List.append(self.RT_Absolute_Threshold(pronunciation, word_Activation_Array, acc_Criteria[0]));
-            rt_Relative_Threshold_List.append(self.RT_Relative_Threshold(pronunciation, word_Activation_Array, acc_Criteria[1]));
-            rt_Time_Dependent_List.append(self.RT_Time_Dependent(pronunciation, word_Activation_Array, acc_Criteria[2]));
+            rt_Absolute_Threshold_List.append(self.RT_Absolute_Threshold(pronunciation, word_Activation_Array, absolute_Acc_Criteria));
+            rt_Relative_Threshold_List.append(self.RT_Relative_Threshold(pronunciation, word_Activation_Array, relative_Acc_Criteria));
+            rt_Time_Dependent_List.append(self.RT_Time_Dependent(pronunciation, word_Activation_Array, time_Acc_Criteria));
 
         if raw_Data:
             output_Phoneme_Activation_Data = ["Target\tPhoneme\tPosition\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
@@ -593,6 +598,7 @@ class TISK_Model:
                 plt.savefig(" ".join(pronunciation) + "_Word.png");
 
         plt.show(block=False);
+
     def Extract_Data(self, pronunciation, activation_Ratio_Dict = {}, extract_Phoneme_List = None, extract_Diphone_List = None, extract_Single_Phone_List = None, extract_Word_List = None, file_Save = False):
         """
         Export the activation result about selected representations in inserted pronunciation simulation.
