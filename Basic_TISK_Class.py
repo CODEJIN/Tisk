@@ -55,7 +55,7 @@ def List_Generate():
     return list(phoneme_Set), word_List;
 
 class TISK_Model:
-    def __init__(self, phoneme_List, word_List, time_Slot = None):
+    def __init__(self, phoneme_List, word_List, time_Slot = None, threshold = None):
         #Assign Label
         self.phoneme_List = phoneme_List;
         self.diphone_List = [];
@@ -70,7 +70,6 @@ class TISK_Model:
         self.word_Amount = len(self.word_List);
 
         self.parameter_Dict = {};
-        self.parameter_Dict[("Length", "Threshold")] = 0.91;
         self.parameter_Dict[("Length", "IStep")] = 10;
         max_Word_Length = max([len(x) for x in self.word_List]);
         if time_Slot is None:
@@ -79,6 +78,11 @@ class TISK_Model:
             raise Exception("Assigned time slot is lower than the length of the longest word");
         else:
             self.parameter_Dict[("Length", "Time_Slot")] = time_Slot;
+
+        if threshold is None:
+            self.parameter_Dict[("Length", "Threshold")] = (self.parameter_Dict[("Length", "IStep")] * (self.parameter_Dict[("Length", "Time_Slot")] - 1) + 1) / (self.parameter_Dict[("Length", "IStep")] * self.parameter_Dict[("Length", "Time_Slot")]);
+        else:
+            self.parameter_Dict[("Length", "Threshold")] = threshold;
 
         self.Decay_Parameter_Assign(0.001, 0.001, 0.001, 0.01);
         self.Weight_Parameter_Assign(1.0, 0.1, 0.05, 0.01, -0.005);
@@ -107,6 +111,12 @@ class TISK_Model:
             self.parameter_Dict[("Weight", "Word_to_Word")] = word_to_Word_Weight;
 
         self.initialized = False;
+
+        if self.parameter_Dict[("Weight", "Phoneme_to_Phone")] * self.parameter_Dict[("Length", "Time_Slot")] <= self.parameter_Dict[("Length", "Threshold")]:
+            print("Phoneme to Phone Weight: " + str(self.parameter_Dict[("Weight", "Phoneme_to_Phone")]));
+            print("Time Slot: " + str(self.parameter_Dict[("Length", "Time_Slot")]))
+            print("Threshold: " + str(self.parameter_Dict[("Length", "Threshold")]))
+            print("It is recommanded that the value multiplied by 'Phoneme to Phone weight' and 'Time Slot' is greater than 'Threshold'.");
 
     def Feedback_Parameter_Assign(self, word_to_Diphone_Activation = None, word_to_SPhone_Activation = None, word_to_Diphone_Inhibition = None, word_to_SPhone_Inhibition = None):
         if word_to_Diphone_Activation is not None:
@@ -642,7 +652,7 @@ class TISK_Model:
             for extract_Phoneme in extract_Phoneme_List:
                 phoneme_Index = self.phoneme_List.index(extract_Phoneme[0]) + (extract_Phoneme[1] * len(self.phoneme_List));
                 activation_List.append(phoneme_Activation_Array[:,phoneme_Index]);
-            result_Array.append(np.array(activation_List));
+            result_Array.append(np.vstack(activation_List));
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Phoneme.txt", "w") as f:
@@ -658,7 +668,7 @@ class TISK_Model:
             for extract_Diphone in extract_Diphone_List:
                 diphone_Index = self.diphone_List.index(extract_Diphone);
                 activation_List.append(diphone_Activation_Array[:,diphone_Index]);
-            result_Array.append(np.array(activation_List));
+            result_Array.append(np.vstack(activation_List));
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Diphone.txt", "w") as f:
@@ -674,7 +684,7 @@ class TISK_Model:
             for extract_Single_Phone in extract_Single_Phone_List:
                 single_Phone_Index = self.single_Phone_List.index(extract_Single_Phone);
                 activation_List.append(single_Phone_Activation_Array[:,single_Phone_Index]);
-            result_Array.append(np.array(activation_List));
+            result_Array.append(np.vstack(activation_List));
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Single_Phone.txt", "w") as f:
@@ -690,7 +700,7 @@ class TISK_Model:
             for extract_Word in extract_Word_List:
                 word_Index = self.word_List.index(extract_Word);
                 activation_List.append(word_Activation_Array[:,word_Index]);
-            result_Array.append(np.array(activation_List));
+            result_Array.append(np.vstack(activation_List));
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Word.txt", "w") as f:
@@ -702,6 +712,65 @@ class TISK_Model:
                     f.write("".join(extract_Text));
 
         return result_Array;
+
+    def Average_Activation_by_Category_Graph(self, pronunciation_List, file_Save = False):
+        marker_list = [",", "o", "v", "^", "<", ">", "1", "2", "3", "4", "s", "p", "*", "h", "H", "+", "x", "D", "d", "|", "_"];
+
+        target_Activation_List = [];
+        cohort_Activation_List = [];
+        rhyme_Activation_List = [];
+        embedding_Activation_List = [];
+        other_Activation_List = [];
+
+        for pronunciation in pronunciation_List:
+            cohort_List, rhyme_List, embedding_List, other_List = self.Category_List(pronunciation);
+            target_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=[pronunciation])[0]);
+            if len(cohort_List) > 0:
+                cohort_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=cohort_List)[0]);
+            if len(rhyme_List) > 0:
+                rhyme_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=rhyme_List)[0]);
+            if len(embedding_List) > 0:
+                embedding_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=embedding_List)[0]);
+            if len(other_List) > 0:
+                other_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=other_List)[0]);
+
+        display_Data_List = [];
+        display_Category_List = [];
+
+        if len(target_Activation_List) > 0:
+            display_Data_List.append(np.mean(np.vstack(target_Activation_List), axis=0));
+            display_Category_List.append("Target");
+
+        if len(cohort_Activation_List) > 0:
+            display_Data_List.append(np.mean(np.vstack(cohort_Activation_List), axis=0));
+            display_Category_List.append("Cohort");
+
+        if len(rhyme_Activation_List) > 0:
+            display_Data_List.append(np.mean(np.vstack(rhyme_Activation_List), axis=0));
+            display_Category_List.append("Rhyme");
+
+        if len(embedding_Activation_List) > 0:
+            display_Data_List.append(np.mean(np.vstack(embedding_Activation_List), axis=0));
+            display_Category_List.append("Embedding");
+
+        if len(other_Activation_List) > 0:
+            display_Data_List.append(np.mean(np.vstack(other_Activation_List), axis=0));
+            display_Category_List.append("Other");
+
+        fig = plt.figure(figsize=(8, 8));
+        for y_arr, label, marker in zip(display_Data_List, display_Category_List, marker_list[0:len(display_Category_List)]):
+            plt.plot(list(range(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])), y_arr, label=label, marker=marker);
+
+        plt.title("Average activation by category");
+        plt.gca().set_xlim([0, self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]])
+        plt.gca().set_ylim([-0.01,1.01])
+        plt.legend();
+        plt.draw();
+        if file_Save:
+            plt.savefig("Average_Activation_by_Category_Graph.png");
+
+        plt.show(block=False);
+
 
 if __name__ == "__main__":
     # Example
@@ -724,3 +793,6 @@ if __name__ == "__main__":
     # result = tisk_Model.Extract_Data(pronunciation='pat',
     #      extract_Phoneme_List = [("p", 0), ("a",1), ("t", 2)], extract_Diphone_List = ["pa", "pt", "ap"], extract_Single_Phone_List = ["p", "a", "t"],
     #      extract_Word_List = ['pat', 'tap'], file_Save=True)
+
+    tisk_Model.Average_Activation_by_Category_Graph(word_List);
+    input("Press Enter to continue...")
