@@ -35,9 +35,10 @@ import matplotlib.pyplot as plt;
 import time;
 import os;
 
-def List_Generate():
+def List_Generate(file="Pronunciation_Data.txt"):
     word_List = [];
-    with open("Pronunciation_Data.txt") as f:
+    #with open("Pronunciation_Data.txt") as f:
+    with open(file) as f:
         readLines = f.readlines();
         for readLine in readLines:
             word_List.append(readLine.replace("\n",""));
@@ -358,6 +359,7 @@ class TISK_Model:
             the accuracy about inserted pronunciations
 
         """
+        spent_Time_List = [];
 
         rt_Absolute_Threshold_List = [];
         rt_Relative_Threshold_List = [];
@@ -368,7 +370,10 @@ class TISK_Model:
         single_Phone_Activation_Array_List = [];
         word_Activation_Array_List = [];
         for pronunciation in pronunciation_List:
+            start_Time = time.time();
             phoneme_Activation_Array, diphone_Activation_Array, single_Phone_Activation_Array, word_Activation_Array = self.Run(pronunciation);
+            spent_Time_List.append(time.time() - start_Time);
+
             phoneme_Activation_Array_List.append(phoneme_Activation_Array);
             diphone_Activation_Array_List.append(diphone_Activation_Array);
             single_Phone_Activation_Array_List.append(single_Phone_Activation_Array);
@@ -377,6 +382,10 @@ class TISK_Model:
             rt_Absolute_Threshold_List.append(self.RT_Absolute_Threshold(pronunciation, word_Activation_Array, absolute_Acc_Criteria));
             rt_Relative_Threshold_List.append(self.RT_Relative_Threshold(pronunciation, word_Activation_Array, relative_Acc_Criteria));
             rt_Time_Dependent_List.append(self.RT_Time_Dependent(pronunciation, word_Activation_Array, time_Acc_Criteria));
+
+
+        print("Simulation spent time: " + str(round(np.sum(spent_Time_List), 3)) + "s");
+        print("Simulation spent time per one word: " + str(round(np.mean(spent_Time_List), 3)) + "s");
 
         if raw_Data:
             output_Phoneme_Activation_Data = ["Target\tPhoneme\tPosition\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
@@ -512,12 +521,17 @@ class TISK_Model:
         display_Word_List : list of string, optional
             The list which what words are displayed in the exported word graph. An item of this list should be a word string.
 
+        file_Save: bool, optional
+            If this parameter is 'True', the graph of the representations which you select will be exported.
+
         """
 
 
         marker_list = [",", "o", "v", "^", "<", ">", "1", "2", "3", "4", "s", "p", "*", "h", "H", "+", "x", "D", "d", "|", "_"];
 
+        start_Time = time.time();
         phoneme_Activation_Array, diphone_Activation_Array, single_Phone_Activation_Array, word_Activation_Array = self.Run(pronunciation, activation_Ratio_Dict);
+        print("Simulation spent time: " + str(round(time.time() - start_Time, 3)) + "s");
 
         if not display_Phoneme_List is None:
             activation_List = [];
@@ -643,7 +657,9 @@ class TISK_Model:
 
         """
 
+        start_Time = time.time();
         phoneme_Activation_Array, diphone_Activation_Array, single_Phone_Activation_Array, word_Activation_Array = self.Run(pronunciation, activation_Ratio_Dict);
+        print("Simulation spent time: " + str(round(time.time() - start_Time, 3)) + "s");
 
         result_Array = [];
 
@@ -714,6 +730,21 @@ class TISK_Model:
         return result_Array;
 
     def Average_Activation_by_Category_Graph(self, pronunciation_List, file_Save = False):
+        """
+        Export the categorized average graph about all pronunciations of inserted list.
+
+        Parameters
+        ----------
+        pronunciation_List : list of string or string list
+            The list or pronunciations. Each item should be a phoneme string of a list of phonemes.
+
+        file_Save: bool, optional
+            If this parameter is 'True', the graph will be saved.
+
+        """
+
+        spent_Time_List = [];
+
         marker_list = [",", "o", "v", "^", "<", ">", "1", "2", "3", "4", "s", "p", "*", "h", "H", "+", "x", "D", "d", "|", "_"];
 
         target_Activation_List = [];
@@ -723,38 +754,46 @@ class TISK_Model:
         other_Activation_List = [];
 
         for pronunciation in pronunciation_List:
+            start_Time = time.time();
+            word_Activation_Array = self.Run(pronunciation)[3];
+            spent_Time_List.append(time.time() - start_Time);
+
             cohort_List, rhyme_List, embedding_List, other_List = self.Category_List(pronunciation);
-            target_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=[pronunciation])[0]);
+
+            target_Activation_List.append(word_Activation_Array[:, [self.word_List.index(pronunciation)]]);
             if len(cohort_List) > 0:
-                cohort_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=cohort_List)[0]);
+                cohort_Activation_List.append(word_Activation_Array[:, [self.word_List.index(cohort) for cohort in cohort_List]]);
             if len(rhyme_List) > 0:
-                rhyme_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=rhyme_List)[0]);
+                rhyme_Activation_List.append(word_Activation_Array[:, [self.word_List.index(rhyme) for rhyme in rhyme_List]]);
             if len(embedding_List) > 0:
-                embedding_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=embedding_List)[0]);
+                embedding_Activation_List.append(word_Activation_Array[:, [self.word_List.index(embedding) for embedding in embedding_List]]);
             if len(other_List) > 0:
-                other_Activation_List.append(self.Extract_Data(pronunciation, extract_Word_List=other_List)[0]);
+                other_Activation_List.append(word_Activation_Array[:, [self.word_List.index(other) for other in other_List]]);
+
+        print("Simulation spent time: " + str(round(np.sum(spent_Time_List), 3)) + "s");
+        print("Simulation spent time per one word: " + str(round(np.mean(spent_Time_List), 3)) + "s");
 
         display_Data_List = [];
         display_Category_List = [];
 
         if len(target_Activation_List) > 0:
-            display_Data_List.append(np.mean(np.vstack(target_Activation_List), axis=0));
+            display_Data_List.append(np.mean(np.hstack(target_Activation_List), axis=1));
             display_Category_List.append("Target");
 
         if len(cohort_Activation_List) > 0:
-            display_Data_List.append(np.mean(np.vstack(cohort_Activation_List), axis=0));
+            display_Data_List.append(np.mean(np.hstack(cohort_Activation_List), axis=1));
             display_Category_List.append("Cohort");
 
         if len(rhyme_Activation_List) > 0:
-            display_Data_List.append(np.mean(np.vstack(rhyme_Activation_List), axis=0));
+            display_Data_List.append(np.mean(np.hstack(rhyme_Activation_List), axis=1));
             display_Category_List.append("Rhyme");
 
         if len(embedding_Activation_List) > 0:
-            display_Data_List.append(np.mean(np.vstack(embedding_Activation_List), axis=0));
+            display_Data_List.append(np.mean(np.hstack(embedding_Activation_List), axis=1));
             display_Category_List.append("Embedding");
 
         if len(other_Activation_List) > 0:
-            display_Data_List.append(np.mean(np.vstack(other_Activation_List), axis=0));
+            display_Data_List.append(np.mean(np.hstack(other_Activation_List), axis=1));
             display_Category_List.append("Other");
 
         fig = plt.figure(figsize=(8, 8));
@@ -771,28 +810,40 @@ class TISK_Model:
 
         plt.show(block=False);
 
-
 if __name__ == "__main__":
-    # Example
+    # # Example
+    # phoneme_List, word_List = List_Generate();
+    # tisk_Model = TISK_Model(phoneme_List, word_List, time_Slot=10);
+    #
+    # # tisk_Model.Decay_Parameter_Assign(decay_Phoneme = 0.001, decay_Diphone = 0.1, decay_SPhone = 0.1, decay_Word = 0.05);
+    # # tisk_Model.Weight_Parameter_Assign(input_to_Phoneme_Weight = 1.0, phoneme_to_Phone_Weight = 0.1, diphone_to_Word_Weight = 0.05, sPhone_to_Word_Weight = 0.01, word_to_Word_Weight = -0.01);
+    # # tisk_Model.Feedback_Parameter_Assign(word_to_Diphone_Activation = 0.15, word_to_SPhone_Activation = 0.15, word_to_Diphone_Inhibition = -0.05, word_to_SPhone_Inhibition = -0.05);
+    #
+    # tisk_Model.Weight_Initialize();
+    # tisk_Model.Parameter_Display();
+    # # tisk_Model.Display_Graph(pronunciation="pat", display_Phoneme_List = [("p", 0), ("a",1), ("t", 2)], display_Diphone_List = ["pa", "pt", "ap"], display_Single_Phone_List = ["p", "a", "t"], display_Word_List = ["pat", "tap"]);
+    # # tisk_Model.Display_Graph(pronunciation="tap", display_Phoneme_List = [("t", 0), ("a",1), ("p", 2)], display_Diphone_List = ["pa", "pt", "at", "ta", "tp", "ap"], display_Single_Phone_List = ["p", "a", "t"], display_Word_List = ["pat", "tap"]);
+    # #print(tisk_Model.Run_List(word_List));
+    #
+    # #result = tisk_Model.Run(pronunciation='pat');
+    # #rt_and_ACC = tisk_Model.Run_List(pronunciation_List = ['baks', 'bar', 'bark', 'bat^l', 'bi'], categorize=True)
+    #
+    # # result = tisk_Model.Extract_Data(pronunciation='pat',
+    # #      extract_Phoneme_List = [("p", 0), ("a",1), ("t", 2)], extract_Diphone_List = ["pa", "pt", "ap"], extract_Single_Phone_List = ["p", "a", "t"],
+    # #      extract_Word_List = ['pat', 'tap'], file_Save=True)
+    #
+    # #tisk_Model.Average_Activation_by_Category_Graph(word_List);
+    #
+    # for file in ["200.txt", "400.txt", "600.txt","800.txt","1000.txt"]:
+    #     phoneme_List, word_List = List_Generate(file);
+    #     tisk_Model = TISK_Model(phoneme_List, word_List, time_Slot=10);
+    #     tisk_Model.Weight_Initialize();
+    #     st = time.time()
+    #     result = tisk_Model.Run(pronunciation='a');
+    #     print(time.time() - st);
     phoneme_List, word_List = List_Generate();
     tisk_Model = TISK_Model(phoneme_List, word_List, time_Slot=10);
-
-    # tisk_Model.Decay_Parameter_Assign(decay_Phoneme = 0.001, decay_Diphone = 0.1, decay_SPhone = 0.1, decay_Word = 0.05);
-    # tisk_Model.Weight_Parameter_Assign(input_to_Phoneme_Weight = 1.0, phoneme_to_Phone_Weight = 0.1, diphone_to_Word_Weight = 0.05, sPhone_to_Word_Weight = 0.01, word_to_Word_Weight = -0.01);
-    # tisk_Model.Feedback_Parameter_Assign(word_to_Diphone_Activation = 0.15, word_to_SPhone_Activation = 0.15, word_to_Diphone_Inhibition = -0.05, word_to_SPhone_Inhibition = -0.05);
-
     tisk_Model.Weight_Initialize();
-    tisk_Model.Parameter_Display();
-    # tisk_Model.Display_Graph(pronunciation="pat", display_Phoneme_List = [("p", 0), ("a",1), ("t", 2)], display_Diphone_List = ["pa", "pt", "ap"], display_Single_Phone_List = ["p", "a", "t"], display_Word_List = ["pat", "tap"]);
-    # tisk_Model.Display_Graph(pronunciation="tap", display_Phoneme_List = [("t", 0), ("a",1), ("p", 2)], display_Diphone_List = ["pa", "pt", "at", "ta", "tp", "ap"], display_Single_Phone_List = ["p", "a", "t"], display_Word_List = ["pat", "tap"]);
-    #print(tisk_Model.Run_List(word_List));
-
-    #result = tisk_Model.Run(pronunciation='pat');
-    #rt_and_ACC = tisk_Model.Run_List(pronunciation_List = ['baks', 'bar', 'bark', 'bat^l', 'bi'], categorize=True)
-
-    # result = tisk_Model.Extract_Data(pronunciation='pat',
-    #      extract_Phoneme_List = [("p", 0), ("a",1), ("t", 2)], extract_Diphone_List = ["pa", "pt", "ap"], extract_Single_Phone_List = ["p", "a", "t"],
-    #      extract_Word_List = ['pat', 'tap'], file_Save=True)
-
     tisk_Model.Average_Activation_by_Category_Graph(word_List);
-    input("Press Enter to continue...")
+
+    input("Press Enter to continue...");
