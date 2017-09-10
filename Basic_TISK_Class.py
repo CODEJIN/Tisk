@@ -56,7 +56,7 @@ def List_Generate(file="Pronunciation_Data.txt"):
     return list(phoneme_Set), word_List;
 
 class TISK_Model:
-    def __init__(self, phoneme_List, word_List, time_Slot = None, threshold = None):
+    def __init__(self, phoneme_List, word_List, time_Slots = None, nphone_Threshold = None):
         #Assign Label
         self.phoneme_List = phoneme_List;
         self.diphone_List = [];
@@ -71,19 +71,19 @@ class TISK_Model:
         self.word_Amount = len(self.word_List);
 
         self.parameter_Dict = {};
-        self.parameter_Dict[("Length", "IStep")] = 10;
+        self.parameter_Dict["IStep"] = 10;
         max_Word_Length = max([len(x) for x in self.word_List]);
-        if time_Slot is None:
-            self.parameter_Dict[("Length", "Time_Slot")] = max_Word_Length;
-        elif time_Slot < max_Word_Length:
+        if time_Slots is None:
+            self.parameter_Dict["Time_Slots"] = max_Word_Length;
+        elif time_Slots < max_Word_Length:
             raise Exception("Assigned time slot is lower than the length of the longest word");
         else:
-            self.parameter_Dict[("Length", "Time_Slot")] = time_Slot;
+            self.parameter_Dict["Time_Slots"] = time_Slots;
 
-        if threshold is None:
-            self.parameter_Dict[("Length", "Threshold")] = (self.parameter_Dict[("Length", "IStep")] * (self.parameter_Dict[("Length", "Time_Slot")] - 1) + 1) / (self.parameter_Dict[("Length", "IStep")] * self.parameter_Dict[("Length", "Time_Slot")]);
+        if nphone_Threshold is None:
+            self.parameter_Dict["nPhone_Threshold"] = (self.parameter_Dict["IStep"] * (self.parameter_Dict["Time_Slots"] - 1) + 1) / (self.parameter_Dict["IStep"] * self.parameter_Dict["Time_Slots"]);
         else:
-            self.parameter_Dict[("Length", "Threshold")] = threshold;
+            self.parameter_Dict["nPhone_Threshold"] = nphone_Threshold;
 
         self.Decay_Parameter_Assign(0.001, 0.001, 0.001, 0.01);
         self.Weight_Parameter_Assign(1.0, 0.1, 0.05, 0.01, -0.005);
@@ -113,10 +113,10 @@ class TISK_Model:
 
         self.initialized = False;
 
-        if self.parameter_Dict[("Weight", "Phoneme_to_Phone")] * self.parameter_Dict[("Length", "Time_Slot")] <= self.parameter_Dict[("Length", "Threshold")]:
+        if self.parameter_Dict[("Weight", "Phoneme_to_Phone")] * self.parameter_Dict["Time_Slots"] <= self.parameter_Dict["nPhone_Threshold"]:
             print("Phoneme to Phone Weight: " + str(self.parameter_Dict[("Weight", "Phoneme_to_Phone")]));
-            print("Time Slot: " + str(self.parameter_Dict[("Length", "Time_Slot")]))
-            print("Threshold: " + str(self.parameter_Dict[("Length", "Threshold")]))
+            print("Time Slot: " + str(self.parameter_Dict["Time_Slots"]))
+            print("Threshold: " + str(self.parameter_Dict["nPhone_Threshold"]))
             print("It is recommanded that the value multiplied by 'Phoneme to Phone weight' and 'Time Slot' is greater than 'Threshold'.");
 
     def Feedback_Parameter_Assign(self, word_to_Diphone_Activation = None, word_to_SPhone_Activation = None, word_to_Diphone_Inhibition = None, word_to_SPhone_Inhibition = None):
@@ -132,9 +132,11 @@ class TISK_Model:
         self.initialized = False;
 
     def Weight_Initialize(self):
+        print("Weight Connection start...");
+
         #Weight Generate
-        self.weightMatrix_Phoneme_to_Diphone = np.zeros(shape=(self.phoneme_Amount * self.parameter_Dict[("Length", "Time_Slot")], self.diphone_Amount));
-        self.weightMatrix_Phoneme_to_Single_Phone = np.zeros(shape=(self.phoneme_Amount * self.parameter_Dict[("Length", "Time_Slot")], self.phoneme_Amount));
+        self.weightMatrix_Phoneme_to_Diphone = np.zeros(shape=(self.phoneme_Amount * self.parameter_Dict["Time_Slots"], self.diphone_Amount));
+        self.weightMatrix_Phoneme_to_Single_Phone = np.zeros(shape=(self.phoneme_Amount * self.parameter_Dict["Time_Slots"], self.phoneme_Amount));
         self.weightMatrix_Diphone_to_Word = np.zeros(shape=(self.diphone_Amount, self.word_Amount));
         self.weightMatrix_Single_Phone_to_Word = np.zeros(shape=(self.phoneme_Amount, self.word_Amount));
         self.weightMatrix_Word_to_Word = np.zeros(shape=(self.word_Amount, self.word_Amount));
@@ -143,59 +145,71 @@ class TISK_Model:
 
         #Weight Connection
         #Phoneme -> Diphone & Single phone
-        for slot_Index in range(self.parameter_Dict[("Length", "Time_Slot")]):
+        print("Weight Connection: Phoneme -> Diphone & Single phone");
+        for slot_Index in range(self.parameter_Dict["Time_Slots"]):
             for phoneme_Index in range(self.phoneme_Amount):
                 for diphone_Index in range(self.diphone_Amount):
                     if self.phoneme_List[phoneme_Index] == self.diphone_List[diphone_Index][0]:
-                        self.weightMatrix_Phoneme_to_Diphone[slot_Index * self.phoneme_Amount + phoneme_Index, diphone_Index] += self.parameter_Dict[("Weight", "Phoneme_to_Phone")] * (self.parameter_Dict[("Length", "Time_Slot")] - 1 - slot_Index);    #When slot is more later, weight decrease more.
+                        self.weightMatrix_Phoneme_to_Diphone[slot_Index * self.phoneme_Amount + phoneme_Index, diphone_Index] += self.parameter_Dict[("Weight", "Phoneme_to_Phone")] * (self.parameter_Dict["Time_Slots"] - 1 - slot_Index);    #When slot is more later, weight decrease more.
                     if self.phoneme_List[phoneme_Index] == self.diphone_List[diphone_Index][1]:
                         self.weightMatrix_Phoneme_to_Diphone[slot_Index * self.phoneme_Amount + phoneme_Index, diphone_Index] += self.parameter_Dict[("Weight", "Phoneme_to_Phone")] * slot_Index; #When slot is more later, weight increase more.
                 for single_Phone_Index in range(self.phoneme_Amount):
                     if self.phoneme_List[phoneme_Index] == self.single_Phone_List[single_Phone_Index]:
-                        self.weightMatrix_Phoneme_to_Single_Phone[slot_Index * self.phoneme_Amount + phoneme_Index, single_Phone_Index] += self.parameter_Dict[("Weight", "Phoneme_to_Phone")] * self.parameter_Dict[("Length", "Time_Slot")];    #Always weight become 1
+                        self.weightMatrix_Phoneme_to_Single_Phone[slot_Index * self.phoneme_Amount + phoneme_Index, single_Phone_Index] += self.parameter_Dict[("Weight", "Phoneme_to_Phone")] * self.parameter_Dict["Time_Slots"];    #Always weight become 1
 
         ##Diphone -> Word
+        print("Weight Connection: Diphone -> Word");
         for diphone_Index in range(self.diphone_Amount):
             for word_Index in range(self.word_Amount):
                 if self.diphone_List[diphone_Index] in self.Open_Diphone_Generate(self.word_List[word_Index]):
                     self.weightMatrix_Diphone_to_Word[diphone_Index, word_Index] = self.parameter_Dict[("Weight", "Diphone_to_Word")] / len(self.word_List[word_Index]);   #Divide by the length of pronunciation
 
         ##Single phone -> Word
+        print("Weight Connection: Single phone -> Word");
         for single_Phone_Index in range(self.phoneme_Amount):
             for word_Index in range(self.word_Amount):
                 if self.single_Phone_List[single_Phone_Index] in self.word_List[word_Index]:
                     self.weightMatrix_Single_Phone_to_Word[single_Phone_Index, word_Index] = self.parameter_Dict[("Weight", "SPhone_to_Word")]; #Always weight become 0.01
 
         ##Word -> Word (Inhibition)
-        for word1_Index in range(self.word_Amount):
-            for word2_Index in range(self.word_Amount):
-                word1_Feature = set([self.word_List[word1_Index][x:x+2] for x in range(len(self.word_List[word1_Index]) - 1)] + list(self.word_List[word1_Index]));
-                word2_Feature = set([self.word_List[word2_Index][x:x+2] for x in range(len(self.word_List[word2_Index]) - 1)] + list(self.word_List[word2_Index]));
-
-                intersection = word1_Feature & word2_Feature;
-                self.weightMatrix_Word_to_Word[word1_Index, word2_Index] = len(intersection) * self.parameter_Dict[("Weight", "Word_to_Word")]; # shared feature is more, the inhibition also become stronger
-        for word_Index in range(self.word_Amount):
-            self.weightMatrix_Word_to_Word[word_Index, word_Index] = 0; # self inhibtion is 0
+        print("Weight Connection: Word -> Word");
+        if self.parameter_Dict[("Weight", "Word_to_Word")] != 0:
+            for word1_Index in range(self.word_Amount):
+                for word2_Index in range(self.word_Amount):
+                    word1_Feature = set([self.word_List[word1_Index][x:x+2] for x in range(len(self.word_List[word1_Index]) - 1)] + list(self.word_List[word1_Index]));
+                    word2_Feature = set([self.word_List[word2_Index][x:x+2] for x in range(len(self.word_List[word2_Index]) - 1)] + list(self.word_List[word2_Index]));
+                    intersection = word1_Feature & word2_Feature;
+                    self.weightMatrix_Word_to_Word[word1_Index, word2_Index] = len(intersection); # shared feature is more, the inhibition also become stronger
+            for word_Index in range(self.word_Amount):
+                self.weightMatrix_Word_to_Word[word_Index, word_Index] = 0; # self inhibtion is 0
+            self.weightMatrix_Word_to_Word *= self.parameter_Dict[("Weight", "Word_to_Word")];
 
         ##Word -> Diphone & Single Phone
-        for word_Index in range(self.word_Amount):
-            for diphone_Index in range(self.diphone_Amount):
-                if self.diphone_List[diphone_Index] in self.Open_Diphone_Generate(self.word_List[word_Index]):
-                    self.weightMatrix_Word_to_Diphone[word_Index, diphone_Index] = self.parameter_Dict[("Feedback", "Word_to_Diphone_Activation")];
-                else:
-                    self.weightMatrix_Word_to_Diphone[word_Index, diphone_Index] = self.parameter_Dict[("Feedback", "Word_to_Diphone_Inhibition")];
-            for single_Phone_Index in range(self.phoneme_Amount):
-                if self.single_Phone_List[single_Phone_Index] in self.word_List[word_Index]:
-                    self.weightMatrix_Word_to_Single_Phone[word_Index, single_Phone_Index] = self.parameter_Dict[("Feedback", "Word_to_SPhone_Activation")];
-                else:
-                    self.weightMatrix_Word_to_Single_Phone[word_Index, single_Phone_Index] = self.parameter_Dict[("Feedback", "Word_to_SPhone_Inhibition")];
+        print("Weight Connection: Word -> Diphone & Single Phone");
+        if self.parameter_Dict[("Feedback", "Word_to_Diphone_Activation")] != 0 or self.parameter_Dict[("Feedback", "Word_to_Diphone_Inhibition")] != 0 or self.parameter_Dict[("Feedback", "Word_to_SPhone_Activation")] != 0 or self.parameter_Dict[("Feedback", "Word_to_SPhone_Inhibition")] != 0:
+            for word_Index in range(self.word_Amount):
+                for diphone_Index in range(self.diphone_Amount):
+                    if self.diphone_List[diphone_Index] in self.Open_Diphone_Generate(self.word_List[word_Index]):
+                        self.weightMatrix_Word_to_Diphone[word_Index, diphone_Index] = self.parameter_Dict[("Feedback", "Word_to_Diphone_Activation")];
+                    else:
+                        self.weightMatrix_Word_to_Diphone[word_Index, diphone_Index] = self.parameter_Dict[("Feedback", "Word_to_Diphone_Inhibition")];
+                for single_Phone_Index in range(self.phoneme_Amount):
+                    if self.single_Phone_List[single_Phone_Index] in self.word_List[word_Index]:
+                        self.weightMatrix_Word_to_Single_Phone[word_Index, single_Phone_Index] = self.parameter_Dict[("Feedback", "Word_to_SPhone_Activation")];
+                    else:
+                        self.weightMatrix_Word_to_Single_Phone[word_Index, single_Phone_Index] = self.parameter_Dict[("Feedback", "Word_to_SPhone_Inhibition")];
+
+        print("Weight Connection finished...");
 
         self.initialized = True;
 
     def Parameter_Display(self):
         if self.initialized:
             for key in self.parameter_Dict.keys():
-                print(key[1] + "_" + key[0] + ": " + str(self.parameter_Dict[key]));
+                if type(key) == str:
+                    print(key + ": " + str(self.parameter_Dict[key]));
+                else:
+                    print(key[1] + "_" + key[0] + ": " + str(self.parameter_Dict[key]));
         else:
             print("Model is not initialized yet. PLEASE INITIALIZE BY USING 'Weight_Initialize()'");
 
@@ -205,7 +219,7 @@ class TISK_Model:
         elif type(pronunciation) == list:
             inserted_Phoneme_List = pronunciation;
 
-        pattern = np.zeros(shape=(1, self.phoneme_Amount * self.parameter_Dict[("Length", "Time_Slot")]));
+        pattern = np.zeros(shape=(1, self.phoneme_Amount * self.parameter_Dict["Time_Slots"]));
 
         for slot_Index in range(len(inserted_Phoneme_List)):
             if slot_Index in activation_Ratio_Dict.keys():
@@ -253,24 +267,24 @@ class TISK_Model:
         word_Activation_Cycle_List = [];
 
         ##Gate initialize
-        gate_Phoneme_to_Diphone = np.zeros(shape=(self.phoneme_Amount*self.parameter_Dict[("Length", "Time_Slot")], self.diphone_Amount)) + 1; #Initially all gates have state 1
+        gate_Phoneme_to_Diphone = np.zeros(shape=(self.phoneme_Amount*self.parameter_Dict["Time_Slots"], self.diphone_Amount)) + 1; #Initially all gates have state 1
 
         ##Layer Initialize
-        phoneme_Layer_Activation = np.zeros(shape = (1, self.phoneme_Amount * self.parameter_Dict[("Length", "Time_Slot")]))
+        phoneme_Layer_Activation = np.zeros(shape = (1, self.phoneme_Amount * self.parameter_Dict["Time_Slots"]))
         diphone_Layer_Activation = np.zeros(shape = (1, self.diphone_Amount));
         single_Phone_Layer_Activation = np.zeros(shape = (1, self.phoneme_Amount));
         word_Layer_Activation = np.zeros(shape = (1, self.word_Amount));
 
-        for slot_Index in range(self.parameter_Dict[("Length", "Time_Slot")]):
-            location_Input = np.zeros(shape = (1, self.phoneme_Amount * self.parameter_Dict[("Length", "Time_Slot")]));
+        for slot_Index in range(self.parameter_Dict["Time_Slots"]):
+            location_Input = np.zeros(shape = (1, self.phoneme_Amount * self.parameter_Dict["Time_Slots"]));
             location_Input[0, slot_Index*self.phoneme_Amount:(slot_Index+1)*self.phoneme_Amount] = 1;
             #Time control (The current phoneme location of pronunication)
-            for step_Index in range(self.parameter_Dict[("Length", "IStep")]):
+            for step_Index in range(self.parameter_Dict["IStep"]):
                 phoneme_Layer_Stroage = (using_Pattern * location_Input) * self.parameter_Dict[("Weight", "Input_to_Phoneme")];
                 diphone_Layer_Stroage = phoneme_Layer_Activation.dot(gate_Phoneme_to_Diphone * self.weightMatrix_Phoneme_to_Diphone)
-                diphone_Layer_Stroage = np.sign((np.sign(diphone_Layer_Stroage - self.parameter_Dict[("Length", "Threshold")]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Diphone);  #Binary + Feedback
+                diphone_Layer_Stroage = np.sign((np.sign(diphone_Layer_Stroage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Diphone);  #Binary + Feedback
                 single_Phone_Layer_Stroage = phoneme_Layer_Activation.dot(self.weightMatrix_Phoneme_to_Single_Phone);
-                single_Phone_Layer_Stroage = np.sign((np.sign(single_Phone_Layer_Stroage - self.parameter_Dict[("Length", "Threshold")]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Single_Phone);  #Binary + Feedback
+                single_Phone_Layer_Stroage = np.sign((np.sign(single_Phone_Layer_Stroage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Single_Phone);  #Binary + Feedback
                 word_Layer_Stroage = diphone_Layer_Activation.dot(self.weightMatrix_Diphone_to_Word) + single_Phone_Layer_Activation.dot(self.weightMatrix_Single_Phone_to_Word) + word_Layer_Activation.dot(self.weightMatrix_Word_to_Word);
 
                 phoneme_Layer_Activation = np.clip(phoneme_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Phoneme")]) - np.abs(phoneme_Layer_Stroage) * phoneme_Layer_Activation + phoneme_Layer_Stroage.clip(min=0), 0, 1);
@@ -286,10 +300,83 @@ class TISK_Model:
             if slot_Index < len(pronunciation): #If slot_Index is same or bigger than length of pronunciation, there is no input
                 for diphone_Index in range(self.diphone_Amount):
                     if pronunciation[slot_Index] == self.diphone_List[diphone_Index][0] and pronunciation[slot_Index] != self.diphone_List[diphone_Index][1]: #Forward phone is same to inserted, and bacward phone is different
-                        for slot_Index_for_Gate in range(slot_Index + 1, self.parameter_Dict[("Length", "Time_Slot")]):   #This mean closing process only affect the slots which are after current slot.
+                        for slot_Index_for_Gate in range(slot_Index + 1, self.parameter_Dict["Time_Slots"]):   #This mean closing process only affect the slots which are after current slot.
                             gate_Phoneme_to_Diphone[slot_Index_for_Gate * self.phoneme_Amount + self.phoneme_List.index(pronunciation[slot_Index]),diphone_Index] = 0;    #Assign 0
 
         return np.array(phoneme_Activation_Cycle_List), np.array(diphone_Activation_Cycle_List), np.array(single_Phone_Activation_Cycle_List), np.array(word_Activation_Cycle_List);
+
+    def Multi_Run(self, pronunciation_List):
+        """
+        Export the activation result about selected representations in inserted pronunciation simulation.
+
+        Parameters
+        ----------
+        pronunciation : string or list of string
+            The list or string about phonemes.
+
+        Returns
+        -------
+        out : ndarrays
+            phoneme, diphone, single phone, and word activation matrix. Each matrix's first is the word index. Second dimension is 'Time slot * ISetp'. This is cycle. You can see the specific timing of specific word by [:, row_Index,:]. Third index relates with the representation. You can know that each index represent what from the 'self.phoneme_List', 'self.diphone_List', 'self.diphone_List', and 'self_word_List'.
+
+        """
+
+        pattern_List = [];
+        for pronunciation in pronunciation_List:
+            pattern_List.append(self.Pattern_Generate(pronunciation));
+        using_Pattern = np.vstack(pattern_List);
+
+        phoneme_Activation_Cycle_List = [];
+        diphone_Activation_Cycle_List = [];
+        single_Phone_Activation_Cycle_List = [];
+        word_Activation_Cycle_List = [];
+
+        ##Gate initialize
+        gate_Phoneme_to_Diphone = np.zeros(shape=(len(pronunciation_List), self.phoneme_Amount*self.parameter_Dict["Time_Slots"], self.diphone_Amount)) + 1; #Initially all gates have state 1
+
+        ##Layer Initialize
+        phoneme_Layer_Activation = np.zeros(shape = (len(pronunciation_List), self.phoneme_Amount * self.parameter_Dict["Time_Slots"]))
+        diphone_Layer_Activation = np.zeros(shape = (len(pronunciation_List), self.diphone_Amount));
+        single_Phone_Layer_Activation = np.zeros(shape = (len(pronunciation_List), self.phoneme_Amount));
+        word_Layer_Activation = np.zeros(shape = (len(pronunciation_List), self.word_Amount));
+
+        for slot_Index in range(self.parameter_Dict["Time_Slots"]):
+            location_Input = np.zeros(shape = (len(pronunciation_List), self.phoneme_Amount * self.parameter_Dict["Time_Slots"]));
+            location_Input[:, slot_Index*self.phoneme_Amount:(slot_Index+1)*self.phoneme_Amount] = 1;
+            #Time control (The current phoneme location of pronunication)
+            for step_Index in range(self.parameter_Dict["IStep"]):
+                phoneme_Layer_Stroage = (using_Pattern * location_Input) * self.parameter_Dict[("Weight", "Input_to_Phoneme")];
+                gated_WeightMatrix_Phoneme_to_Diphone = gate_Phoneme_to_Diphone * self.weightMatrix_Phoneme_to_Diphone;
+                diphone_Layer_Stroage = np.vstack([np.dot(phoneme_Layer_Activation[[x]], gated_WeightMatrix_Phoneme_to_Diphone[x]) for x in range(len(pronunciation_List))]);   #Because weight is 3D.
+                diphone_Layer_Stroage = np.sign((np.sign(diphone_Layer_Stroage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Diphone);  #Binary + Feedback
+                single_Phone_Layer_Stroage = phoneme_Layer_Activation.dot(self.weightMatrix_Phoneme_to_Single_Phone);
+                single_Phone_Layer_Stroage = np.sign((np.sign(single_Phone_Layer_Stroage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Single_Phone);  #Binary + Feedback
+                word_Layer_Stroage = diphone_Layer_Activation.dot(self.weightMatrix_Diphone_to_Word) + single_Phone_Layer_Activation.dot(self.weightMatrix_Single_Phone_to_Word) + word_Layer_Activation.dot(self.weightMatrix_Word_to_Word);
+
+                phoneme_Layer_Activation = np.clip(phoneme_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Phoneme")]) - np.abs(phoneme_Layer_Stroage) * phoneme_Layer_Activation + phoneme_Layer_Stroage.clip(min=0), 0, 1);
+                diphone_Layer_Activation = np.clip(diphone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Diphone")]) - np.abs(diphone_Layer_Stroage) * diphone_Layer_Activation + diphone_Layer_Stroage.clip(min=0), 0, 1);
+                single_Phone_Layer_Activation = np.clip(single_Phone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "SPhone")]) - np.abs(single_Phone_Layer_Stroage) * single_Phone_Layer_Activation + single_Phone_Layer_Stroage.clip(min=0), 0, 1);
+                word_Layer_Activation = np.clip(word_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Word")]) - np.abs(word_Layer_Stroage) * word_Layer_Activation + word_Layer_Stroage.clip(min=0), 0, 1);
+
+                phoneme_Activation_Cycle_List.append(phoneme_Layer_Activation);
+                diphone_Activation_Cycle_List.append(diphone_Layer_Activation);
+                single_Phone_Activation_Cycle_List.append(single_Phone_Layer_Activation);
+                word_Activation_Cycle_List.append(word_Layer_Activation);
+            for pronunciation_Index in range(len(pronunciation_List)):
+                pronunciation = pronunciation_List[pronunciation_Index]
+                if slot_Index < len(pronunciation): #If slot_Index is same or bigger than length of pronunciation, there is no input
+                    for diphone_Index in range(self.diphone_Amount):
+                        if pronunciation[slot_Index] == self.diphone_List[diphone_Index][0] and pronunciation[slot_Index] != self.diphone_List[diphone_Index][1]: #Forward phone is same to inserted, and bacward phone is different
+                            for slot_Index_for_Gate in range(slot_Index + 1, self.parameter_Dict["Time_Slots"]):   #This mean closing process only affect the slots which are after current slot.
+                                gate_Phoneme_to_Diphone[pronunciation_Index, slot_Index_for_Gate * self.phoneme_Amount + self.phoneme_List.index(pronunciation[slot_Index]),diphone_Index] = 0;    #Assign 0
+
+        total_Cycle = self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"];
+        phoneme_Activation_Cycle = np.rollaxis(np.array(phoneme_Activation_Cycle_List), 1);
+        diphone_Activation_Cycle = np.rollaxis(np.array(diphone_Activation_Cycle_List), 1);
+        single_Phone_Activation_Cycle = np.rollaxis(np.array(single_Phone_Activation_Cycle_List), 1);
+        word_Activation_Cycle = np.rollaxis(np.array(word_Activation_Cycle_List), 1);
+
+        return phoneme_Activation_Cycle, diphone_Activation_Cycle, single_Phone_Activation_Cycle, word_Activation_Cycle;
 
     def RT_Absolute_Threshold(self, pronunciation, word_Activation_Array, criterion = 0.75):
         target_Index = self.word_List.index(pronunciation);
@@ -297,7 +384,7 @@ class TISK_Model:
         other_Max_Array = np.max(np.delete(word_Activation_Array, (target_Index), 1), axis=1);
         check_Array = (target_Array > criterion) * (other_Max_Array < criterion);
 
-        for cycle in range(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]):
+        for cycle in range(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]):
             if check_Array[cycle]:
                 return cycle;
 
@@ -308,7 +395,7 @@ class TISK_Model:
         target_Array = word_Activation_Array[:,target_Index]
         other_Max_Array = np.max(np.delete(word_Activation_Array, (target_Index), 1), axis=1);
 
-        for cycle in range(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]):
+        for cycle in range(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]):
             if target_Array[cycle] > other_Max_Array[cycle] + criterion:
                 return cycle;
 
@@ -320,13 +407,13 @@ class TISK_Model:
         other_Max_Array = np.max(np.delete(word_Activation_Array, (target_Index), 1), axis=1);
         check_Array = target_Array > other_Max_Array;
 
-        for cycle in range(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")] - criterion):
+        for cycle in range(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"] - criterion):
             if all(check_Array[cycle:cycle+criterion]):
                 return cycle + criterion;
 
         return np.nan;
 
-    def Run_List(self, pronunciation_List, absolute_Acc_Criteria=0.75, relative_Acc_Criteria=0.05, time_Acc_Criteria=10, output_File_Name=None, raw_Data=False, categorize=False):
+    def Run_List1(self, pronunciation_List, absolute_Acc_Criteria=0.75, relative_Acc_Criteria=0.05, time_Acc_Criteria=10, output_File_Name=None, raw_Data=False, categorize=False):
         """
         Export the raw data and categorized result about all pronunciations of inserted list.
 
@@ -388,15 +475,15 @@ class TISK_Model:
         print("Simulation spent time per one word: " + str(round(np.mean(spent_Time_List), 3)) + "s");
 
         if raw_Data:
-            output_Phoneme_Activation_Data = ["Target\tPhoneme\tPosition\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
-            output_Diphone_Activation_Data = ["Target\tDiphone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
-            output_Single_Phone_Activation_Data = ["Target\tSingle_Phone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
-            output_Word_Activation_Data = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+            output_Phoneme_Activation_Data = ["Target\tPhoneme\tPosition\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
+            output_Diphone_Activation_Data = ["Target\tDiphone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
+            output_Single_Phone_Activation_Data = ["Target\tSingle_Phone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
+            output_Word_Activation_Data = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
 
             for pronunciation in sorted(pronunciation_List):
                 pronunciation_Index = pronunciation_List.index(pronunciation);
                 for phoneme in sorted(self.phoneme_List):
-                    for location in range(self.parameter_Dict[("Length", "Time_Slot")]):
+                    for location in range(self.parameter_Dict["Time_Slots"]):
                         phoneme_Index = self.phoneme_Amount * location + self.phoneme_List.index(phoneme);
                         output_Phoneme_Activation_Data.append(pronunciation + "\t" + phoneme + "\t" + str(location) + "\t" + "\t".join([str(x) for x in phoneme_Activation_Array_List[pronunciation_Index][:,phoneme_Index]]) + "\n");
 
@@ -422,7 +509,7 @@ class TISK_Model:
                 fileStream.write("".join(output_Word_Activation_Data));
 
         if categorize:
-            output_Category_Activation_Average_Data = ["Target\tCategory\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+            output_Category_Activation_Average_Data = ["Target\tCategory\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
 
             for pronunciation in sorted(pronunciation_List):
                 pronunciation_Index = pronunciation_List.index(pronunciation);
@@ -448,15 +535,15 @@ class TISK_Model:
                         other_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
 
                 if len(target_Activation_List) == 0:
-                    target_Activation_List.append(np.zeros(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]));
+                    target_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
                 if len(cohort_Activation_List) == 0:
-                    cohort_Activation_List.append(np.zeros(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]));
+                    cohort_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
                 if len(rhyme_Activation_List) == 0:
-                    rhyme_Activation_List.append(np.zeros(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]));
+                    rhyme_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
                 if len(embedding_Activation_List) == 0:
-                    embedding_Activation_List.append(np.zeros(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]));
+                    embedding_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
                 if len(other_Activation_List) == 0:
-                    other_Activation_List.append(np.zeros(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]));
+                    other_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
 
                 output_Category_Activation_Average_Data.append(pronunciation + "\tTarget\t" + "\t".join([str(x) for x in np.mean(target_Activation_List, axis=0)]) + "\n");
                 output_Category_Activation_Average_Data.append(pronunciation + "\tCohort\t" + "\t".join([str(x) for x in np.mean(cohort_Activation_List, axis=0)]) + "\n");
@@ -474,6 +561,165 @@ class TISK_Model:
         result_List.append(np.count_nonzero(~np.isnan(rt_Relative_Threshold_List)) / len(pronunciation_List))
         result_List.append(np.nanmean(rt_Time_Dependent_List))
         result_List.append(np.count_nonzero(~np.isnan(rt_Time_Dependent_List)) / len(pronunciation_List))
+
+        return result_List;
+
+    def Run_List2(self, pronunciation_List, absolute_Acc_Criteria=0.75, relative_Acc_Criteria=0.05, time_Acc_Criteria=10, output_File_Name=None, raw_Data=False, categorize=False, batch_Size=100):
+        """
+        Export the raw data and categorized result about all pronunciations of inserted list.
+
+        Parameters
+        ----------
+        pronunciation_List : list of string or string list
+            The list or pronunciations. Each item should be a phoneme string of a list of phonemes.
+
+        absolute_Acc_Criteria: float
+            The criteria for the calculation of reaction time and accuracy. The value is for the absolute threshold.
+
+        relative_Acc_Criteria: float
+            The criteria for the calculation of reaction time and accuracy. The value is for the relative threshold.
+
+        time_Acc_Criteria: integer
+            The criteria for the calculation of reaction time and accuracy. The value is for the time-dependent criteria.
+
+        output_File_Name: string, optional
+            The prefix of export files.
+
+        raw_Data : bool, optional
+            The exporting of raw data. If this parameter is ‘True’, 4 files will be exported about the activation pattern of all units of all layers of all pronunciations of inserted list.
+
+        categorize : bool, optional
+            The exporting of categorized result. If this parameter is ‘True’, a file will be exported about the mean activation pattern of the target, cohort, rhyme, embedding words of all pronunciations of inserted list.
+
+        batch_Size : int, optional
+            How many words are simulated at one time. This parameter does not affect the reusult. However, the larger value, the faster processing speed, but the more memory required. If a 'memory error' occurs, reduce the size of this parameter because it means that you can not afford to load into the machine's memory.
+
+        Returns
+        -------
+        out : list of float
+            the accuracy about inserted pronunciations
+
+        """
+        spent_Time_List = [];
+
+        rt_Absolute_Threshold_List = [];
+        rt_Relative_Threshold_List = [];
+        rt_Time_Dependent_List = [];
+
+        phoneme_Activation_Array_List = [];
+        diphone_Activation_Array_List = [];
+        single_Phone_Activation_Array_List = [];
+        word_Activation_Array_List = [];
+
+        for batch_Index in range(0, len(pronunciation_List), batch_Size):
+            start_Time = time.time();
+            phoneme_Activation_Array, diphone_Activation_Array, single_Phone_Activation_Array, word_Activation_Array = self.Multi_Run(pronunciation_List[batch_Index:batch_Index + batch_Size]);
+            spent_Time_List.append(time.time() - start_Time);
+
+            for pronunciation_Index in range(min(len(pronunciation_List) - batch_Index, batch_Size)):
+                pronunciation = pronunciation_List[batch_Index + pronunciation_Index];
+
+                phoneme_Activation_Array_List.append(phoneme_Activation_Array[pronunciation_Index]);
+                diphone_Activation_Array_List.append(diphone_Activation_Array[pronunciation_Index]);
+                single_Phone_Activation_Array_List.append(single_Phone_Activation_Array[pronunciation_Index]);
+                word_Activation_Array_List.append(word_Activation_Array[pronunciation_Index]);
+
+                rt_Absolute_Threshold_List.append(self.RT_Absolute_Threshold(pronunciation, word_Activation_Array_List[-1], absolute_Acc_Criteria));
+                rt_Relative_Threshold_List.append(self.RT_Relative_Threshold(pronunciation, word_Activation_Array_List[-1], relative_Acc_Criteria));
+                rt_Time_Dependent_List.append(self.RT_Time_Dependent(pronunciation, word_Activation_Array_List[-1], time_Acc_Criteria));
+
+        print("Simulation spent time: " + str(round(np.sum(spent_Time_List), 3)) + "s");
+        print("Simulation spent time per one word: " + str(round(np.sum(spent_Time_List) / len(pronunciation_List) , 3)) + "s");
+
+        if raw_Data:
+            output_Phoneme_Activation_Data = ["Target\tPhoneme\tPosition\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
+            output_Diphone_Activation_Data = ["Target\tDiphone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
+            output_Single_Phone_Activation_Data = ["Target\tSingle_Phone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
+            output_Word_Activation_Data = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
+
+            for pronunciation in sorted(pronunciation_List):
+                pronunciation_Index = pronunciation_List.index(pronunciation);
+                for phoneme in sorted(self.phoneme_List):
+                    for location in range(self.parameter_Dict["Time_Slots"]):
+                        phoneme_Index = self.phoneme_Amount * location + self.phoneme_List.index(phoneme);
+                        output_Phoneme_Activation_Data.append(pronunciation + "\t" + phoneme + "\t" + str(location) + "\t" + "\t".join([str(x) for x in phoneme_Activation_Array_List[pronunciation_Index][:,phoneme_Index]]) + "\n");
+
+                for diphone in sorted(self.diphone_List):
+                    diphone_Index = self.diphone_List.index(diphone);
+                    output_Diphone_Activation_Data.append(pronunciation + "\t" + diphone + "\t" + "\t".join([str(x) for x in diphone_Activation_Array_List[pronunciation_Index][:,diphone_Index]]) + "\n");
+
+                for single_Phone in sorted(self.single_Phone_List):
+                    single_Phone_Index = self.single_Phone_List.index(single_Phone);
+                    output_Single_Phone_Activation_Data.append(pronunciation + "\t" + single_Phone + "\t" + "\t".join([str(x) for x in single_Phone_Activation_Array_List[pronunciation_Index][:,single_Phone_Index]]) + "\n");
+
+                for word in sorted(self.word_List):
+                    word_Index = self.word_List.index(word);
+                    output_Word_Activation_Data.append(pronunciation + "\t" + word + "\t" + "\t".join([str(x) for x in word_Activation_Array_List[pronunciation_Index][:,word_Index]]) + "\n");
+
+            with open(output_File_Name + "_Phoneme_Activation_Data.txt", "w") as fileStream:
+                fileStream.write("".join(output_Phoneme_Activation_Data));
+            with open(output_File_Name + "_Diphone_Activation_Data.txt", "w") as fileStream:
+                fileStream.write("".join(output_Diphone_Activation_Data));
+            with open(output_File_Name + "_Single_Phone_Activation_Data.txt", "w") as fileStream:
+                fileStream.write("".join(output_Single_Phone_Activation_Data));
+            with open(output_File_Name + "_Word_Activation_Data.txt", "w") as fileStream:
+                fileStream.write("".join(output_Word_Activation_Data));
+
+        if categorize:
+            output_Category_Activation_Average_Data = ["Target\tCategory\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
+
+            for pronunciation in sorted(pronunciation_List):
+                pronunciation_Index = pronunciation_List.index(pronunciation);
+                cohort_List, rhyme_List, embedding_List, other_List = self.Category_List(pronunciation)
+
+                target_Activation_List = [];
+                cohort_Activation_List = [];
+                rhyme_Activation_List = [];
+                embedding_Activation_List = [];
+                other_Activation_List = [];
+
+                for word in sorted(self.word_List):
+                    word_Index = self.word_List.index(word);
+                    if pronunciation == word:
+                        target_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
+                    if word in cohort_List:
+                        cohort_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
+                    if word in rhyme_List:
+                        rhyme_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
+                    if word in embedding_List:
+                        embedding_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
+                    if word in other_List:
+                        other_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
+
+                if len(target_Activation_List) == 0:
+                    target_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
+                if len(cohort_Activation_List) == 0:
+                    cohort_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
+                if len(rhyme_Activation_List) == 0:
+                    rhyme_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
+                if len(embedding_Activation_List) == 0:
+                    embedding_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
+                if len(other_Activation_List) == 0:
+                    other_Activation_List.append(np.zeros(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
+
+                output_Category_Activation_Average_Data.append(pronunciation + "\tTarget\t" + "\t".join([str(x) for x in np.mean(target_Activation_List, axis=0)]) + "\n");
+                output_Category_Activation_Average_Data.append(pronunciation + "\tCohort\t" + "\t".join([str(x) for x in np.mean(cohort_Activation_List, axis=0)]) + "\n");
+                output_Category_Activation_Average_Data.append(pronunciation + "\tRhyme\t" + "\t".join([str(x) for x in np.mean(rhyme_Activation_List, axis=0)]) + "\n");
+                output_Category_Activation_Average_Data.append(pronunciation + "\tEmbedding\t" + "\t".join([str(x) for x in np.mean(embedding_Activation_List, axis=0)]) + "\n");
+                output_Category_Activation_Average_Data.append(pronunciation + "\tOther\t" + "\t".join([str(x) for x in np.mean(other_Activation_List, axis=0)]) + "\n");
+
+            with open(output_File_Name + "_Category_Activation_Data.txt", "w") as fileStream:
+                fileStream.write("".join(output_Category_Activation_Average_Data));
+
+        result_List = [];
+        result_List.append(np.nanmean(rt_Absolute_Threshold_List))
+        result_List.append(np.count_nonzero(~np.isnan(rt_Absolute_Threshold_List)) / len(pronunciation_List))
+        result_List.append(np.nanmean(rt_Relative_Threshold_List))
+        result_List.append(np.count_nonzero(~np.isnan(rt_Relative_Threshold_List)) / len(pronunciation_List))
+        result_List.append(np.nanmean(rt_Time_Dependent_List))
+        result_List.append(np.count_nonzero(~np.isnan(rt_Time_Dependent_List)) / len(pronunciation_List))
+
+        #print(rt_Absolute_Threshold_List);
 
         return result_List;
 
@@ -539,16 +785,16 @@ class TISK_Model:
                 phoneme_Index = self.phoneme_List.index(display_Phoneme[0]) + (display_Phoneme[1] * len(self.phoneme_List));
                 activation_List.append(phoneme_Activation_Array[:,phoneme_Index]);
 
-            display_Data = np.zeros(shape=(len(activation_List), self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]));
+            display_Data = np.zeros(shape=(len(activation_List), self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
             for index in range(len(activation_List)):
                 display_Data[index] = activation_List[index];
 
             fig = plt.figure(figsize=(8, 8));
             for y_arr, label, marker in zip(display_Data, display_Phoneme_List, marker_list[0:len(display_Phoneme_List)]):
-                plt.plot(list(range(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])), y_arr, label=label, marker=marker);
+                plt.plot(list(range(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])), y_arr, label=label, marker=marker);
 
             plt.title("Phoneme (Inserted: " + " ".join(pronunciation) + ")");
-            plt.gca().set_xlim([0, self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]])
+            plt.gca().set_xlim([0, self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]])
             plt.gca().set_ylim([-0.01,1.01])
             plt.legend();
             plt.draw();
@@ -561,16 +807,16 @@ class TISK_Model:
                 diphone_Index = self.diphone_List.index(display_Diphone);
                 activation_List.append(diphone_Activation_Array[:,diphone_Index]);
 
-            display_Data = np.zeros(shape=(len(activation_List), self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]));
+            display_Data = np.zeros(shape=(len(activation_List), self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
             for index in range(len(activation_List)):
                 display_Data[index] = activation_List[index];
 
             fig = plt.figure(figsize=(8, 8));
             for y_arr, label, marker in zip(display_Data, display_Diphone_List, marker_list[0:len(display_Diphone_List)]):
-                plt.plot(list(range(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])), y_arr, label=label, marker=marker);
+                plt.plot(list(range(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])), y_arr, label=label, marker=marker);
 
             plt.title("Diphone (Inserted: " + " ".join(pronunciation) + ")");
-            plt.gca().set_xlim([0, self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]])
+            plt.gca().set_xlim([0, self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]])
             plt.gca().set_ylim([-0.01,1.01])
             plt.legend();
             plt.draw();
@@ -583,16 +829,16 @@ class TISK_Model:
                 single_Phone_Index = self.single_Phone_List.index(display_Single_Phone);
                 activation_List.append(single_Phone_Activation_Array[:,single_Phone_Index]);
 
-            display_Data = np.zeros(shape=(len(activation_List), self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]));
+            display_Data = np.zeros(shape=(len(activation_List), self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
             for index in range(len(activation_List)):
                 display_Data[index] = activation_List[index];
 
             fig = plt.figure(figsize=(8, 8));
             for y_arr, label, marker in zip(display_Data, display_Single_Phone_List, marker_list[0:len(display_Single_Phone_List)]):
-                plt.plot(list(range(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])), y_arr, label=label, marker=marker);
+                plt.plot(list(range(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])), y_arr, label=label, marker=marker);
 
             plt.title("Single Phone (Inserted: " + " ".join(pronunciation) + ")");
-            plt.gca().set_xlim([0, self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]])
+            plt.gca().set_xlim([0, self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]])
             plt.gca().set_ylim([-0.01,1.01])
             plt.legend();
             plt.draw();
@@ -605,16 +851,16 @@ class TISK_Model:
                 word_Index = self.word_List.index(display_Word);
                 activation_List.append(word_Activation_Array[:,word_Index]);
 
-            display_Data = np.zeros(shape=(len(activation_List), self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]));
+            display_Data = np.zeros(shape=(len(activation_List), self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]));
             for index in range(len(activation_List)):
                 display_Data[index] = activation_List[index];
 
             fig = plt.figure(figsize=(8, 8));
             for y_arr, label, marker in zip(display_Data, display_Word_List, marker_list[0:len(display_Word_List)]):
-                plt.plot(list(range(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])), y_arr, label=label, marker=marker);
+                plt.plot(list(range(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])), y_arr, label=label, marker=marker);
 
             plt.title("Word (Inserted: " + " ".join(pronunciation) + ")");
-            plt.gca().set_xlim([0, self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]])
+            plt.gca().set_xlim([0, self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]])
             plt.gca().set_ylim([-0.01,1.01])
             plt.legend();
             plt.draw();
@@ -672,7 +918,7 @@ class TISK_Model:
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Phoneme.txt", "w") as f:
-                    extract_Text = ["Target\tPhoneme\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+                    extract_Text = ["Target\tPhoneme\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
                     for index in range(len(extract_Phoneme_List)):
                         extract_Text.append(" ".join(pronunciation) + "\t" + str(extract_Phoneme_List[index]) + "\t");
                         extract_Text.append("\t".join([str(x) for x in activation_List[index]]));
@@ -688,7 +934,7 @@ class TISK_Model:
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Diphone.txt", "w") as f:
-                    extract_Text = ["Target\tDiphone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+                    extract_Text = ["Target\tDiphone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
                     for index in range(len(extract_Diphone_List)):
                         extract_Text.append(" ".join(pronunciation) + "\t" + str(extract_Diphone_List[index]) + "\t");
                         extract_Text.append("\t".join([str(x) for x in activation_List[index]]));
@@ -704,7 +950,7 @@ class TISK_Model:
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Single_Phone.txt", "w") as f:
-                    extract_Text = ["Target\tSingle_Phone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+                    extract_Text = ["Target\tSingle_Phone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
                     for index in range(len(extract_Single_Phone_List)):
                         extract_Text.append(" ".join(pronunciation) + "\t" + str(extract_Single_Phone_List[index]) + "\t");
                         extract_Text.append("\t".join([str(x) for x in activation_List[index]]));
@@ -720,7 +966,7 @@ class TISK_Model:
 
             if file_Save:
                 with open(" ".join(pronunciation) + "_Word.txt", "w") as f:
-                    extract_Text = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])]) + "\n"];
+                    extract_Text = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])]) + "\n"];
                     for index in range(len(extract_Word_List)):
                         extract_Text.append(" ".join(pronunciation) + "\t" + str(extract_Word_List[index]) + "\t");
                         extract_Text.append("\t".join([str(x) for x in activation_List[index]]));
@@ -798,10 +1044,10 @@ class TISK_Model:
 
         fig = plt.figure(figsize=(8, 8));
         for y_arr, label, marker in zip(display_Data_List, display_Category_List, marker_list[0:len(display_Category_List)]):
-            plt.plot(list(range(self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")])), y_arr, label=label, marker=marker);
+            plt.plot(list(range(self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"])), y_arr, label=label, marker=marker);
 
         plt.title("Average activation by category");
-        plt.gca().set_xlim([0, self.parameter_Dict[("Length", "Time_Slot")] * self.parameter_Dict[("Length", "IStep")]])
+        plt.gca().set_xlim([0, self.parameter_Dict["Time_Slots"] * self.parameter_Dict["IStep"]])
         plt.gca().set_ylim([-0.01,1.01])
         plt.legend();
         plt.draw();
@@ -841,9 +1087,24 @@ if __name__ == "__main__":
     #     st = time.time()
     #     result = tisk_Model.Run(pronunciation='a');
     #     print(time.time() - st);
-    phoneme_List, word_List = List_Generate();
-    tisk_Model = TISK_Model(phoneme_List, word_List, time_Slot=10);
-    tisk_Model.Weight_Initialize();
-    tisk_Model.Average_Activation_by_Category_Graph(word_List);
+    # phoneme_List, word_List = List_Generate();
+    # print(phoneme_List)
+    # print(len(phoneme_List))
 
-    input("Press Enter to continue...");
+    phoneme_List, word_List = List_Generate();
+    print(len(phoneme_List));
+    tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10);
+    tisk_Model.Weight_Initialize();
+    print(tisk_Model.Run_List2(word_List, batch_Size=50));
+    # print(tisk_Model.Run_List2(word_List, batch_Size=50));
+    # print(tisk_Model.Run_List2(word_List, batch_Size=10));
+
+    # for size in [200, 300, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000]:
+    #     phoneme_List, word_List = List_Generate(str(size) + ".txt");
+    #     print("\nLexicon " + str(size))
+    #     tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10);
+    #     tisk_Model.Weight_Initialize();
+    #     tisk_Model.Run_List1(word_List[:100]);
+    #     tisk_Model.Run_List2(word_List[:100]);
+
+    #input("Press Enter to continue...");
