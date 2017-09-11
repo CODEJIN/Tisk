@@ -712,11 +712,20 @@ class TISK_Model:
                 fileStream.write("".join(output_Category_Activation_Average_Data));
 
         result_List = [];
-        result_List.append(np.nanmean(rt_Absolute_Threshold_List))
+        if all(np.isnan(rt_Absolute_Threshold_List)):
+            result_List.append(np.nan);
+        else:
+            result_List.append(np.nanmean(rt_Absolute_Threshold_List));
         result_List.append(np.count_nonzero(~np.isnan(rt_Absolute_Threshold_List)) / len(pronunciation_List))
-        result_List.append(np.nanmean(rt_Relative_Threshold_List))
+        if all(np.isnan(rt_Relative_Threshold_List)):
+            result_List.append(np.nan);
+        else:
+            result_List.append(np.nanmean(rt_Relative_Threshold_List))
         result_List.append(np.count_nonzero(~np.isnan(rt_Relative_Threshold_List)) / len(pronunciation_List))
-        result_List.append(np.nanmean(rt_Time_Dependent_List))
+        if all(np.isnan(rt_Time_Dependent_List)):
+            result_List.append(np.nan);
+        else:
+            result_List.append(np.nanmean(rt_Time_Dependent_List))
         result_List.append(np.count_nonzero(~np.isnan(rt_Time_Dependent_List)) / len(pronunciation_List))
 
         #print(rt_Absolute_Threshold_List);
