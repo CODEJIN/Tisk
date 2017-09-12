@@ -117,7 +117,7 @@ class TISK_Model:
             print("Phoneme to Phone Weight: " + str(self.parameter_Dict[("Weight", "Phoneme_to_Phone")]));
             print("Time Slot: " + str(self.parameter_Dict["time_Slots"]))
             print("Threshold: " + str(self.parameter_Dict["nPhone_Threshold"]))
-            print("It is recommanded that the value multiplied by 'Phoneme to Phone weight' and 'Time Slot' is greater than 'Threshold'.");
+            print("It is recommended that the value multiplied by 'Phoneme_to_Phone_Weight' and 'time_Slots' is greater than 'nPhone_Threshold'.");
 
     def Feedback_Parameter_Assign(self, word_to_Diphone_Activation = None, word_to_SPhone_Activation = None, word_to_Diphone_Inhibition = None, word_to_SPhone_Inhibition = None):
         if word_to_Diphone_Activation is not None:
@@ -412,157 +412,6 @@ class TISK_Model:
                 return cycle + criterion;
 
         return np.nan;
-
-    # def Run_List(self, pronunciation_List, absolute_Acc_Criteria=0.75, relative_Acc_Criteria=0.05, time_Acc_Criteria=10, output_File_Name=None, raw_Data=False, categorize=False):
-    #     """
-    #     Export the raw data and categorized result about all pronunciations of inserted list.
-    #
-    #     Parameters
-    #     ----------
-    #     pronunciation_List : list of string or string list
-    #         The list or pronunciations. Each item should be a phoneme string of a list of phonemes.
-    #
-    #     absolute_Acc_Criteria: float
-    #         The criteria for the calculation of reaction time and accuracy. The value is for the absolute threshold.
-    #
-    #     relative_Acc_Criteria: float
-    #         The criteria for the calculation of reaction time and accuracy. The value is for the relative threshold.
-    #
-    #     time_Acc_Criteria: integer
-    #         The criteria for the calculation of reaction time and accuracy. The value is for the time-dependent criteria.
-    #
-    #     output_File_Name: string, optional
-    #         The prefix of export files.
-    #
-    #     raw_Data : bool, optional
-    #         The exporting of raw data. If this parameter is ‘True’, 4 files will be exported about the activation pattern of all units of all layers of all pronunciations of inserted list.
-    #
-    #     categorize : bool, optional
-    #         The exporting of categorized result. If this parameter is ‘True’, a file will be exported about the mean activation pattern of the target, cohort, rhyme, embedding words of all pronunciations of inserted list.
-    #
-    #     Returns
-    #     -------
-    #     out : list of float
-    #         the accuracy about inserted pronunciations
-    #
-    #     """
-    #     spent_Time_List = [];
-    #
-    #     rt_Absolute_Threshold_List = [];
-    #     rt_Relative_Threshold_List = [];
-    #     rt_Time_Dependent_List = [];
-    #
-    #     phoneme_Activation_Array_List = [];
-    #     diphone_Activation_Array_List = [];
-    #     single_Phone_Activation_Array_List = [];
-    #     word_Activation_Array_List = [];
-    #     for pronunciation in pronunciation_List:
-    #         start_Time = time.time();
-    #         phoneme_Activation_Array, diphone_Activation_Array, single_Phone_Activation_Array, word_Activation_Array = self.Run(pronunciation);
-    #         spent_Time_List.append(time.time() - start_Time);
-    #
-    #         phoneme_Activation_Array_List.append(phoneme_Activation_Array);
-    #         diphone_Activation_Array_List.append(diphone_Activation_Array);
-    #         single_Phone_Activation_Array_List.append(single_Phone_Activation_Array);
-    #         word_Activation_Array_List.append(word_Activation_Array);
-    #
-    #         rt_Absolute_Threshold_List.append(self.RT_Absolute_Threshold(pronunciation, word_Activation_Array, absolute_Acc_Criteria));
-    #         rt_Relative_Threshold_List.append(self.RT_Relative_Threshold(pronunciation, word_Activation_Array, relative_Acc_Criteria));
-    #         rt_Time_Dependent_List.append(self.RT_Time_Dependent(pronunciation, word_Activation_Array, time_Acc_Criteria));
-    #
-    #
-    #     print("Simulation spent time: " + str(round(np.sum(spent_Time_List), 3)) + "s");
-    #     print("Simulation spent time per one word: " + str(round(np.mean(spent_Time_List), 3)) + "s");
-    #
-    #     if raw_Data:
-    #         output_Phoneme_Activation_Data = ["Target\tPhoneme\tPosition\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"])]) + "\n"];
-    #         output_Diphone_Activation_Data = ["Target\tDiphone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"])]) + "\n"];
-    #         output_Single_Phone_Activation_Data = ["Target\tSingle_Phone\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"])]) + "\n"];
-    #         output_Word_Activation_Data = ["Target\tWord\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"])]) + "\n"];
-    #
-    #         for pronunciation in sorted(pronunciation_List):
-    #             pronunciation_Index = pronunciation_List.index(pronunciation);
-    #             for phoneme in sorted(self.phoneme_List):
-    #                 for location in range(self.parameter_Dict["time_Slots"]):
-    #                     phoneme_Index = self.phoneme_Amount * location + self.phoneme_List.index(phoneme);
-    #                     output_Phoneme_Activation_Data.append(pronunciation + "\t" + phoneme + "\t" + str(location) + "\t" + "\t".join([str(x) for x in phoneme_Activation_Array_List[pronunciation_Index][:,phoneme_Index]]) + "\n");
-    #
-    #             for diphone in sorted(self.diphone_List):
-    #                 diphone_Index = self.diphone_List.index(diphone);
-    #                 output_Diphone_Activation_Data.append(pronunciation + "\t" + diphone + "\t" + "\t".join([str(x) for x in diphone_Activation_Array_List[pronunciation_Index][:,diphone_Index]]) + "\n");
-    #
-    #             for single_Phone in sorted(self.single_Phone_List):
-    #                 single_Phone_Index = self.single_Phone_List.index(single_Phone);
-    #                 output_Single_Phone_Activation_Data.append(pronunciation + "\t" + single_Phone + "\t" + "\t".join([str(x) for x in single_Phone_Activation_Array_List[pronunciation_Index][:,single_Phone_Index]]) + "\n");
-    #
-    #             for word in sorted(self.word_List):
-    #                 word_Index = self.word_List.index(word);
-    #                 output_Word_Activation_Data.append(pronunciation + "\t" + word + "\t" + "\t".join([str(x) for x in word_Activation_Array_List[pronunciation_Index][:,word_Index]]) + "\n");
-    #
-    #         with open(output_File_Name + "_Phoneme_Activation_Data.txt", "w") as fileStream:
-    #             fileStream.write("".join(output_Phoneme_Activation_Data));
-    #         with open(output_File_Name + "_Diphone_Activation_Data.txt", "w") as fileStream:
-    #             fileStream.write("".join(output_Diphone_Activation_Data));
-    #         with open(output_File_Name + "_Single_Phone_Activation_Data.txt", "w") as fileStream:
-    #             fileStream.write("".join(output_Single_Phone_Activation_Data));
-    #         with open(output_File_Name + "_Word_Activation_Data.txt", "w") as fileStream:
-    #             fileStream.write("".join(output_Word_Activation_Data));
-    #
-    #     if categorize:
-    #         output_Category_Activation_Average_Data = ["Target\tCategory\t" + "\t".join([str(x) for x in range(0,self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"])]) + "\n"];
-    #
-    #         for pronunciation in sorted(pronunciation_List):
-    #             pronunciation_Index = pronunciation_List.index(pronunciation);
-    #             cohort_List, rhyme_List, embedding_List, other_List = self.Category_List(pronunciation)
-    #
-    #             target_Activation_List = [];
-    #             cohort_Activation_List = [];
-    #             rhyme_Activation_List = [];
-    #             embedding_Activation_List = [];
-    #             other_Activation_List = [];
-    #
-    #             for word in sorted(self.word_List):
-    #                 word_Index = self.word_List.index(word);
-    #                 if pronunciation == word:
-    #                     target_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
-    #                 if word in cohort_List:
-    #                     cohort_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
-    #                 if word in rhyme_List:
-    #                     rhyme_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
-    #                 if word in embedding_List:
-    #                     embedding_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
-    #                 if word in other_List:
-    #                     other_Activation_List.append(word_Activation_Array_List[pronunciation_Index][:,word_Index]);
-    #
-    #             if len(target_Activation_List) == 0:
-    #                 target_Activation_List.append(np.zeros(self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"]));
-    #             if len(cohort_Activation_List) == 0:
-    #                 cohort_Activation_List.append(np.zeros(self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"]));
-    #             if len(rhyme_Activation_List) == 0:
-    #                 rhyme_Activation_List.append(np.zeros(self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"]));
-    #             if len(embedding_Activation_List) == 0:
-    #                 embedding_Activation_List.append(np.zeros(self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"]));
-    #             if len(other_Activation_List) == 0:
-    #                 other_Activation_List.append(np.zeros(self.parameter_Dict["time_Slots"] * self.parameter_Dict["iStep"]));
-    #
-    #             output_Category_Activation_Average_Data.append(pronunciation + "\tTarget\t" + "\t".join([str(x) for x in np.mean(target_Activation_List, axis=0)]) + "\n");
-    #             output_Category_Activation_Average_Data.append(pronunciation + "\tCohort\t" + "\t".join([str(x) for x in np.mean(cohort_Activation_List, axis=0)]) + "\n");
-    #             output_Category_Activation_Average_Data.append(pronunciation + "\tRhyme\t" + "\t".join([str(x) for x in np.mean(rhyme_Activation_List, axis=0)]) + "\n");
-    #             output_Category_Activation_Average_Data.append(pronunciation + "\tEmbedding\t" + "\t".join([str(x) for x in np.mean(embedding_Activation_List, axis=0)]) + "\n");
-    #             output_Category_Activation_Average_Data.append(pronunciation + "\tOther\t" + "\t".join([str(x) for x in np.mean(other_Activation_List, axis=0)]) + "\n");
-    #
-    #         with open(output_File_Name + "_Category_Activation_Data.txt", "w") as fileStream:
-    #             fileStream.write("".join(output_Category_Activation_Average_Data));
-    #
-    #     result_List = [];
-    #     result_List.append(np.nanmean(rt_Absolute_Threshold_List))
-    #     result_List.append(np.count_nonzero(~np.isnan(rt_Absolute_Threshold_List)) / len(pronunciation_List))
-    #     result_List.append(np.nanmean(rt_Relative_Threshold_List))
-    #     result_List.append(np.count_nonzero(~np.isnan(rt_Relative_Threshold_List)) / len(pronunciation_List))
-    #     result_List.append(np.nanmean(rt_Time_Dependent_List))
-    #     result_List.append(np.count_nonzero(~np.isnan(rt_Time_Dependent_List)) / len(pronunciation_List))
-    #
-    #     return result_List;
 
     def Run_List(self, pronunciation_List, absolute_Acc_Criteria=0.75, relative_Acc_Criteria=0.05, time_Acc_Criteria=10, output_File_Name=None, raw_Data=False, categorize=False, batch_Size=100):
         """
@@ -984,7 +833,7 @@ class TISK_Model:
 
         return result_Array;
 
-    def Average_Activation_by_Category_Graph(self, pronunciation_List, file_Save = False):
+    def Average_Activation_by_Category_Graph(self, pronunciation_List, output_File_Name = None, file_Save = False):
         """
         Export the categorized average graph about all pronunciations of inserted list.
 
@@ -1061,7 +910,10 @@ class TISK_Model:
         plt.legend();
         plt.draw();
         if file_Save:
-            plt.savefig("Average_Activation_by_Category_Graph.png");
+            if output_File_Name is None:
+                plt.savefig("Average_Activation_by_Category_Graph.png");
+            else:
+                plt.savefig(output_File_Name + "_Average_Activation_by_Category_Graph.png");
 
         plt.show(block=False);
 
@@ -1100,20 +952,17 @@ if __name__ == "__main__":
     # print(phoneme_List)
     # print(len(phoneme_List))
 
-    phoneme_List, word_List = List_Generate();
+    phoneme_List, word_List = List_Generate("10000.txt");
     tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10);
     tisk_Model.Weight_Initialize();
     tisk_Model.Parameter_Display();
-    print(tisk_Model.Run_List(word_List, batch_Size=50));
-    # print(tisk_Model.Run_List2(word_List, batch_Size=50));
-    # print(tisk_Model.Run_List2(word_List, batch_Size=10));
+    print(tisk_Model.Run_List(word_List, batch_Size=10000));
 
     # for size in [200, 300, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000]:
     #     phoneme_List, word_List = List_Generate(str(size) + ".txt");
     #     print("\nLexicon " + str(size))
     #     tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10);
     #     tisk_Model.Weight_Initialize();
-    #     tisk_Model.Run_List1(word_List[:100]);
-    #     tisk_Model.Run_List2(word_List[:100]);
+    #     tisk_Model.Run_List1(word_List);
 
     #input("Press Enter to continue...");
