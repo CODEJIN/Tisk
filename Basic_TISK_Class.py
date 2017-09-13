@@ -413,7 +413,7 @@ class TISK_Model:
 
         return np.nan;
 
-    def Run_List(self, pronunciation_List, absolute_Acc_Criteria=0.75, relative_Acc_Criteria=0.05, time_Acc_Criteria=10, output_File_Name=None, raw_Data=False, categorize=False, batch_Size=100):
+    def Run_List(self, pronunciation_List, absolute_Acc_Criteria=0.75, relative_Acc_Criteria=0.05, time_Acc_Criteria=10, output_File_Name=None, raw_Data=False, categorize=False, reaction_Time=False, batch_Size=100):
         """
         Export the raw data and categorized result about all pronunciations of inserted list.
 
@@ -560,6 +560,13 @@ class TISK_Model:
             with open(output_File_Name + "_Category_Activation_Data.txt", "w") as fileStream:
                 fileStream.write("".join(output_Category_Activation_Average_Data));
 
+        if reaction_Time:
+            output_Reaction_Time_Data = ["Target\tAbsolute\tRelative\tTime_Dependent"];
+            for index in range(len(pronunciation_List)):
+                output_Reaction_Time_Data.append("\t".join([pronunciation_List[index], str(rt_Absolute_Threshold_List[index]), str(rt_Relative_Threshold_List[index]), str(rt_Time_Dependent_List[index])]));
+            with open(output_File_Name + "_Reaction_Time.txt", "w") as fileStream:
+                fileStream.write("\n".join(output_Reaction_Time_Data));
+
         result_List = [];
         if all(np.isnan(rt_Absolute_Threshold_List)):
             result_List.append(np.nan);
@@ -576,8 +583,6 @@ class TISK_Model:
         else:
             result_List.append(np.nanmean(rt_Time_Dependent_List))
         result_List.append(np.count_nonzero(~np.isnan(rt_Time_Dependent_List)) / len(pronunciation_List))
-
-        #print(rt_Absolute_Threshold_List);
 
         return result_List;
 
@@ -833,7 +838,7 @@ class TISK_Model:
 
         return result_Array;
 
-    def Average_Activation_by_Category_Graph(self, pronunciation_List, output_File_Name = None, file_Save = False):
+    def Average_Activation_by_Category_Graph(self, pronunciation_List, file_Save = False, output_File_Name = "Average_Activation_by_Category_Graph.png"):
         """
         Export the categorized average graph about all pronunciations of inserted list.
 
@@ -910,10 +915,7 @@ class TISK_Model:
         plt.legend();
         plt.draw();
         if file_Save:
-            if output_File_Name is None:
-                plt.savefig("Average_Activation_by_Category_Graph.png");
-            else:
-                plt.savefig(output_File_Name + "_Average_Activation_by_Category_Graph.png");
+            plt.savefig(output_File_Name);
 
         plt.show(block=False);
 
@@ -952,11 +954,11 @@ if __name__ == "__main__":
     # print(phoneme_List)
     # print(len(phoneme_List))
 
-    phoneme_List, word_List = List_Generate("10000.txt");
+    phoneme_List, word_List = List_Generate();
     tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10);
     tisk_Model.Weight_Initialize();
     tisk_Model.Parameter_Display();
-    print(tisk_Model.Run_List(word_List, batch_Size=10000));
+    print(tisk_Model.Run_List2(word_List, output_File_Name="Test", reaction_Time=True));
 
     # for size in [200, 300, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000]:
     #     phoneme_List, word_List = List_Generate(str(size) + ".txt");
