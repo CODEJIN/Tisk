@@ -838,7 +838,7 @@ class TISK_Model:
 
         return result_Array;
 
-    def Average_Activation_by_Category_Graph(self, pronunciation_List, file_Save = False, output_File_Name = "Average_Activation_by_Category_Graph.png"):
+    def Average_Activation_by_Category_Graph(self, pronunciation_List, file_Save = False, output_File_Name = "Average_Activation_by_Category_Graph.png", batch_Size=100):
         """
         Export the categorized average graph about all pronunciations of inserted list.
 
@@ -849,6 +849,12 @@ class TISK_Model:
 
         file_Save: bool, optional
             If this parameter is 'True', the graph will be saved.
+
+        output_File_Name: string, optional
+            The file name. If 'file_Save' parameter is 'True' and this parameter is not assigned, the exported file name become 'Average_Activation_by_Category_Graph.png'.
+
+        batch_Size : int, optional
+            How many words are simulated at one time. This parameter does not affect the reusult. However, the larger value, the faster processing speed, but the more memory required. If a 'memory error' occurs, reduce the size of this parameter because it means that you can not afford to load into the machine's memory.
 
         """
 
@@ -862,25 +868,29 @@ class TISK_Model:
         embedding_Activation_List = [];
         other_Activation_List = [];
 
-        for pronunciation in pronunciation_List:
+        for batch_Index in range(0, len(pronunciation_List), batch_Size):
             start_Time = time.time();
-            word_Activation_Array = self.Run(pronunciation)[3];
+            batch_Word_Activation_Array = self.Multi_Run(pronunciation_List[batch_Index:batch_Index + batch_Size])[3];
             spent_Time_List.append(time.time() - start_Time);
 
-            cohort_List, rhyme_List, embedding_List, other_List = self.Category_List(pronunciation);
+            for pronunciation_Index in range(min(len(pronunciation_List) - batch_Index, batch_Size)):
+                pronunciation = pronunciation_List[batch_Index + pronunciation_Index];
+                word_Activation_Array = batch_Word_Activation_Array[pronunciation_Index]
 
-            target_Activation_List.append(word_Activation_Array[:, [self.word_List.index(pronunciation)]]);
-            if len(cohort_List) > 0:
-                cohort_Activation_List.append(word_Activation_Array[:, [self.word_List.index(cohort) for cohort in cohort_List]]);
-            if len(rhyme_List) > 0:
-                rhyme_Activation_List.append(word_Activation_Array[:, [self.word_List.index(rhyme) for rhyme in rhyme_List]]);
-            if len(embedding_List) > 0:
-                embedding_Activation_List.append(word_Activation_Array[:, [self.word_List.index(embedding) for embedding in embedding_List]]);
-            if len(other_List) > 0:
-                other_Activation_List.append(word_Activation_Array[:, [self.word_List.index(other) for other in other_List]]);
+                cohort_List, rhyme_List, embedding_List, other_List = self.Category_List(pronunciation);
+
+                target_Activation_List.append(word_Activation_Array[:, [self.word_List.index(pronunciation)]]);
+                if len(cohort_List) > 0:
+                    cohort_Activation_List.append(word_Activation_Array[:, [self.word_List.index(cohort) for cohort in cohort_List]]);
+                if len(rhyme_List) > 0:
+                    rhyme_Activation_List.append(word_Activation_Array[:, [self.word_List.index(rhyme) for rhyme in rhyme_List]]);
+                if len(embedding_List) > 0:
+                    embedding_Activation_List.append(word_Activation_Array[:, [self.word_List.index(embedding) for embedding in embedding_List]]);
+                if len(other_List) > 0:
+                    other_Activation_List.append(word_Activation_Array[:, [self.word_List.index(other) for other in other_List]]);
 
         print("Simulation spent time: " + str(round(np.sum(spent_Time_List), 3)) + "s");
-        print("Simulation spent time per one word: " + str(round(np.mean(spent_Time_List), 3)) + "s");
+        print("Simulation spent time per one word: " + str(round(np.sum(spent_Time_List) / len(pronunciation_List), 3)) + "s");
 
         display_Data_List = [];
         display_Category_List = [];
@@ -958,7 +968,7 @@ if __name__ == "__main__":
     tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10);
     tisk_Model.Weight_Initialize();
     tisk_Model.Parameter_Display();
-    print(tisk_Model.Run_List2(word_List, output_File_Name="Test", reaction_Time=True));
+    print(tisk_Model.Run_List(word_List, output_File_Name="Test", reaction_Time=True));
 
     # for size in [200, 300, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000]:
     #     phoneme_List, word_List = List_Generate(str(size) + ".txt");
