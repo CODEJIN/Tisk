@@ -206,7 +206,6 @@ tisk_Model.Run_List(pronunciation_List = ['baks','bar','bark','bat^l','bi'],
 
 This will create an output file named "Test_Reaction_Time.txt". Its contents would be:
 
-```
 | Target | Absolute | Relative | Time_Dependent |
 |--------|----------|----------|----------------|
 | baks   | 58       | 40       | 46             |
@@ -214,7 +213,6 @@ This will create an output file named "Test_Reaction_Time.txt". Its contents wou
 | bark   | 74       | 52       | 56             |
 | bat^l  | 60       | 39       | 46             |
 | bi     | nan      | 23       | 13             |
-```
 
 Accuracy is indicated by the value for each word for each accuracy criterion. Items that were correctly recognized according to the criterion will have integer values (cycle at which the criterion was met). Items that were not will have values of "nan" (not a number, a standard designation for a missing value). In the current example, we can see that /bi/ ("bee") did not meet the absolute criterion. 
 
@@ -227,10 +225,176 @@ tisk_Model.Run_List(pronunciation_List = pronunciation_List,
 ```
 
 ## Extract data for multiple words in text files
+
+To export results with multiple words, we can use the 'Run_List' function again, as follows: 
+
+```
+# get mean RT and accuracy for specified word list
+# with specified accuracy criteria but ALSO 
+# save activation histories in 'raw' and 'category' formats
+rt_and_ACC = tisk_Model.Run_List(
+        pronunciation_List = ['baks','bar','bark','bat^l','bi'],
+        output_File_Name = 'Result',
+        raw_Data = True,
+        categorize=True)
+```
+
+When we run this code, we get text files with what we call 'raw' and 'category' outputs. Raw files (e.g., for this example, Result_Word_Activation_Data.txt) contain the activations for every word in the lexicon at every time step for each target specified. The file format is very simple. There is a 1-line header with column labels. The first column is 'target', the second is 'word', and the following columns are cycles 0-C, where C is the final cycle (which will have the value [(time_Slots x IStep_Length) -1].
+
+You can also make graphs that correspond to the category data. For example, let's plot the category data for /baks/. 
+
+```
+# trigger a simulation and make a graph
+tisk_Model.Average_Activation_by_Category_Graph(
+          pronunciation_List=['baks'])
+```
+
+We can also get average data and average plots for a set of specified words. For example, suppose for some reason we were interested in the average category plot for the words /pat/, /tap/, and /art/ ("pot", "top", and "art").
+
+```
+# trigger a simulation and make a graph
+tisk_Model.Average_Activation_by_Category_Graph(
+          pronunciation_List=['pat', 'tap', 'art'])
+```
+
+To save this graph as a PNG file, add the file_Save=True argument: 
+
+```
+# trigger a simulation, make a graph, save them as PNG files
+tisk_Model.Average_Activation_by_Category_Graph(
+          pronunciation_List=['pat','tap', 'art'],
+          file_Save=True)
+```
+
+By default, the graph associated with this command will be saved as "Average_Activation_by_Category_Graph.png". To specify a different filename (important if you wish, for example, to loop through many example sets in a Python script), you can do so as follows: 
+
+```
+# trigger a simulation, make a graph, save them as PNG files
+tisk_Model.Average_Activation_by_Category_Graph(
+          pronunciation_List=['pat','tap', 'art'],
+          output_File_Name='Result',
+          file_Save=True)
+```
+
+In this case, the exported graph file name will become 'Result_Average_Activation_by_Category_Graph.png'. By setting the output_File_Name parameter, you can control the prefix of exported file name.
+
+To save the corresponding data file in text format, use the Run_List function: 
+
+```
+tisk_Model.Run_List(
+          pronunciation_List=['pat','tap', 'art'],
+          output_File_Name='Result',
+          categorize=True)
+```
+
 ## Getting comprehensive data for every word in the lexicon
+
+If we combine our last few examples, we can save activations for simulations of every word by replacing our pronunication_List argument above with pronunciation_List (that is, all words included in pronunciation_List):
+
+```
+rt_and_ACC = tisk_Model.Run_List(
+          pronunciation_List = pronunciation_List,
+          output_File_Name = 'all_words',
+          raw_Data = True,
+          categorize=True)
+```
+
+By extension, we can also generate a mean category plot over every word in the lexicon (result shown in Figure 8): 
+
+```
+# make a graph for all words in pronunciation_List
+tisk_Model.Average_Activation_by_Category_Graph(
+pronunciation_List = pronunciation_List)
+```
+
 ## Batch size control
+
+Depending on the size of your lexicon and the memory available on your computer, you may see the 'Memory Error' message when you run batch mode. Batch-mode simulation is not possible if the memory of the machine is too small to handle the size of the batch. To resolve this, you can use the batch_Size parameter to reduce the size of the batch. This parameter determines how many word simulations are conducted in parallel. It only controls the batch size, and does not affect any result. You will get the same result with any batch size your computer's memory can handle. The default value is 100. To see whether your computer memory can handle it, you can test larger values. 
+
+```
+rt_and_ACC = tisk_Model.Run_List(
+          pronunciation_List = pronunciation_List,
+          batch_Size = 10)
+```
+
 ## Reaction time and accuracy for specific words
+
+To check specific kinds of RT for specific words, use commands like these: 
+
+```
+result = tisk_Model.Run('pat')
+abs_RT = tisk_Model.RT_Absolute_Threshold(
+                  pronunciation = 'pat',
+                  word_Activation_Array = result[3],
+                  criterion = 0.75)
+rel_RT = tisk_Model.RT_Relative_Threshold(
+                  pronunciation = 'pat',
+                  word_Activation_Array = result[3],
+                  criterion = 0.05)
+tim_RT = tisk_Model.RT_Time_Dependent(
+                  pronunciation = 'pat',
+                  word_Activation_Array = result[3],
+                  criterion = 10)
+```
+
+If TISK successfully recognized the inserted word, the reaction time will be returned. If the model failed to recognize the word, the returned value is 'numpy.nan'. Of course, we can change the criterion by modifying the parameter 'criterion'.
+
+Alternatively, we could get all accuracy and RT values for a specific word by using a command we introduced earlier:
+
+```
+rt_and_ACC = tisk_Model.Run_List(pronunciation_List = ['pat'])
+```
+
 ## More complex simulations
+
+Since TISK is implemented as a Python class, the user can do arbitrarily complex simulations by writing Python scripts. Doing this may require the user to acquire expertise in Python that is beyond the scope of this short introductory guide. However, to illustrate how one might do this, we include one full, realistic example here. In this example, we will compare competitor effects as a function of word length, by comparing competitor effects for words that are 3 phonemes long vs. words that are 5 phonemes long. All explanations are embedded as comments (preceded by "#") in the code below:
+
+```
+# first, select all words that have length 3 in the lexicon
+length3_Pronunciation_List = [x for x in pronunciation_List if len(x) == 3]
+
+# now do the same for words with length 5
+length5_Pronunciation_List = [x for x in pronunciation_List if len(x) == 5]
+
+# make a graph of average competitor effects for 3-phoneme words
+tisk_Model.Average_Activation_by_Category_Graph(
+pronunciation_List = length3_Pronunciation_List)
+
+# make a graph and also save to a PNG file
+tisk_Model.Average_Activation_by_Category_Graph(
+pronunciation_List= length3_Pronunciation_List,
+file_Save=True,
+output_File_Name='length_3_category_results.png')
+
+# make a graph and also save to a PNG file
+tisk_Model.Average_Activation_by_Category_Graph(
+pronunciation_List= length5_Pronunciation_List,
+file_Save=True,
+output_File_Name= 'length_5_category_results.png')
+
+# save the length 3 data
+tisk_Model.Run_List( pronunciation_List = length3_Pronunciation_List, 
+output_File_Name='length3data', 
+raw_Data = True, categorize = True)
+```
+
+Note that when you save data to text files, if you leave out the " categorize = True " argument, the file with word results will include the over time results for every target in pronunciation list. The first column will list the target, the second column the time step, and then there will be 1 column for every word in the lexicon (i.e., with the activation of that word given the current target at the specified time step).
+
+Of course, this example just scratches the surface of what is possible since TISK is embedded within a complete scripting language. Using standard Python syntax, we can easily filter words by specifying arbitrarily complex conditions. Here are some examples:
+
+```
+# Select words with length greater than or equal to 3 with 
+# phoneme /a/ in position 2
+filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 3 and x[2] == 'a']
+
+# make a graph
+tisk_Model.Average_Activation_by_Category_Graph(
+pronunciation_List = filtered_Pronunciation_List)
+
+# select words with length greater than or equal to 2 with 
+# phoneme /a/ in position 2 and phoneme /k/ in position 3
+filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 4 and x[2] == 'a' and x[3]=='k']
+```
 
 # Reporting Issues
 
