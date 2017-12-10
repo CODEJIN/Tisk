@@ -21,15 +21,15 @@ pip install matplotlab<br>
 ### Preliminary steps
 The following commands prepare TISK for simulations. Lines preceded by "#" are comments and can be skipped.
 ```
-#load the TISK functions
+# load the TISK functions
 import Basic_TISK_Class as tisk
 
-#load the phoneme and pronunciation [word] lists and 
+# load the phoneme and pronunciation [word] lists and 
 #prepare appropriate connections
 phoneme_List, pronunciation_List = tisk.List_Generate()
 
-#initialize the model with the the phoneme_List, 
-#pronunciation_List, number of time slots, and threshold
+# initialize the model with the the phoneme_List, 
+# pronunciation_List, number of time slots, and threshold
 tisk_Model = tisk.TISK_Model(phoneme_List, pronunciation_List,
                              time_Slots = 10,
                              nPhone_Threshold = 0.91)
