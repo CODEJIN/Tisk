@@ -35,10 +35,10 @@ import matplotlib.pyplot as plt;
 import time;
 import os;
 
-def List_Generate(file="Pronunciation_Data.txt"):
+def List_Generate(pronunciation_File="Pronunciation_Data.txt"):
     word_List = [];
     #with open("Pronunciation_Data.txt") as f:
-    with open(file) as f:
+    with open(pronunciation_File) as f:
         readLines = f.readlines();
         for readLine in readLines:
             word_List.append(readLine.replace("\n",""));
@@ -606,6 +606,24 @@ class TISK_Model:
 
         return cohort_List, rhyme_List, embedding_List, other_List;
 
+    def Display_Averaged_Category_Count(self, pronunciation_List):
+        cohort_Count_List = [];
+        rhyme_Count_List = [];
+        embedding_Count_List = [];
+        other_Count_List = [];
+
+        for pronunciation in pronunciation_List:
+            cohort_List, rhyme_List, embedding_List, other_List = self.Category_List(pronunciation);
+            cohort_Count_List.append(len(cohort_List));
+            rhyme_Count_List.append(len(rhyme_List));
+            embedding_Count_List.append(len(embedding_List));
+            other_Count_List.append(len(other_List));
+
+        print("Averaged cohort count:", np.mean(cohort_Count_List));
+        print("Averaged rhyme count:", np.mean(rhyme_Count_List));
+        print("Averaged embedding count:", np.mean(embedding_Count_List));
+        print("Averaged other count:", np.mean(other_Count_List));
+
     def Display_Graph(self, pronunciation, activation_Ratio_Dict = {}, display_Phoneme_List = None, display_Diphone_List = None, display_Single_Phone_List = None, display_Word_List = None, file_Save = False):
         """
         Export the graphs about selected representations in inserted pronunciation simulation.
@@ -928,3 +946,69 @@ class TISK_Model:
             plt.savefig(output_File_Name);
 
         plt.show(block=False);
+
+if __name__ == "__main__":
+    # # Example
+    # phoneme_List, word_List = List_Generate();
+    # tisk_Model = TISK_Model(phoneme_List, word_List, time_Slot=10);
+    #
+    # # tisk_Model.Decay_Parameter_Assign(decay_Phoneme = 0.001, decay_Diphone = 0.1, decay_SPhone = 0.1, decay_Word = 0.05);
+    # # tisk_Model.Weight_Parameter_Assign(input_to_Phoneme_Weight = 1.0, phoneme_to_Phone_Weight = 0.1, diphone_to_Word_Weight = 0.05, sPhone_to_Word_Weight = 0.01, word_to_Word_Weight = -0.01);
+    # # tisk_Model.Feedback_Parameter_Assign(word_to_Diphone_Activation = 0.15, word_to_SPhone_Activation = 0.15, word_to_Diphone_Inhibition = -0.05, word_to_SPhone_Inhibition = -0.05);
+    #
+    # tisk_Model.Weight_Initialize();
+    # tisk_Model.Parameter_Display();
+    # # tisk_Model.Display_Graph(pronunciation="pat", display_Phoneme_List = [("p", 0), ("a",1), ("t", 2)], display_Diphone_List = ["pa", "pt", "ap"], display_Single_Phone_List = ["p", "a", "t"], display_Word_List = ["pat", "tap"]);
+    # # tisk_Model.Display_Graph(pronunciation="tap", display_Phoneme_List = [("t", 0), ("a",1), ("p", 2)], display_Diphone_List = ["pa", "pt", "at", "ta", "tp", "ap"], display_Single_Phone_List = ["p", "a", "t"], display_Word_List = ["pat", "tap"]);
+    # #print(tisk_Model.Run_List(word_List));
+    #
+    # #result = tisk_Model.Run(pronunciation='pat');
+    # #rt_and_ACC = tisk_Model.Run_List(pronunciation_List = ['baks', 'bar', 'bark', 'bat^l', 'bi'], categorize=True)
+    #
+    # # result = tisk_Model.Extract_Data(pronunciation='pat',
+    # #      extract_Phoneme_List = [("p", 0), ("a",1), ("t", 2)], extract_Diphone_List = ["pa", "pt", "ap"], extract_Single_Phone_List = ["p", "a", "t"],
+    # #      extract_Word_List = ['pat', 'tap'], file_Save=True)
+    #
+    # #tisk_Model.Average_Activation_by_Category_Graph(word_List);
+    #
+    # for file in ["200.txt", "400.txt", "600.txt","800.txt","1000.txt"]:
+    #     phoneme_List, word_List = List_Generate(file);
+    #     tisk_Model = TISK_Model(phoneme_List, word_List, time_Slot=10);
+    #     tisk_Model.Weight_Initialize();
+    #     st = time.time()
+    #     result = tisk_Model.Run(pronunciation='a');
+    #     print(time.time() - st);
+    # phoneme_List, word_List = List_Generate();
+    # print(phoneme_List)
+    # print(len(phoneme_List))
+
+    phoneme_List, word_List = List_Generate();
+    tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10);
+    tisk_Model.Weight_Initialize();
+    tisk_Model.Parameter_Display();
+    tisk_Model.Average_Activation_by_Category_Graph(word_List, file_Save = True, output_File_Name = "Average_Activation_by_Category_Graph.png")
+    # print(tisk_Model.Run_List(word_List, output_File_Name="Test", reaction_Time=True));
+
+    # for size in [200, 300, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000]:
+    #     phoneme_List, word_List = List_Generate(str(size) + ".txt");
+    #     print("\nLexicon " + str(size))
+    #     tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10);
+    #     tisk_Model.Weight_Initialize();
+    #     tisk_Model.Run_List1(word_List);
+
+    #input("Press Enter to continue...");
+
+	# phoneme_List, word_List = List_Generate();
+	# tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10);
+	# tisk_Model.Decay_Parameter_Assign(decay_Phoneme = .001, decay_Diphone = .1, decay_SPhone = .1, decay_Word = .05);
+	# tisk_Model.Weight_Parameter_Assign(input_to_Phoneme_Weight = 1.0, phoneme_to_Phone_Weight = .1, diphone_to_Word_Weight = .05, sPhone_to_Word_Weight = .01, word_to_Word_Weight = -.01);
+	# tisk_Model.Feedback_Parameter_Assign(word_to_Diphone_Activation = .15, word_to_SPhone_Activation = .15, word_to_Diphone_Inhibition = -.05, word_to_SPhone_Inhibition = -.05);
+	# tisk_Model.Weight_Initialize();
+	# tisk_Model.Run_List(word_List, absolute_Acc_Criteria=0.35, relative_Acc_Criteria=0.05, time_Acc_Criteria=10, output_File_Name="TISK11", raw_Data=False, categorize=False, reaction_Time=True, batch_Size=212)
+
+    # phoneme_List, word_List = List_Generate("1213_Lexicon.txt");
+    # tisk_Model = TISK_Model(phoneme_List, word_List, time_Slots=10)
+    # tisk_Model.Weight_Parameter_Assign(word_to_Word_Weight = -.001);
+    # tisk_Model.Weight_Initialize();
+    # print(tisk_Model.Run_List(word_List));
+    # tisk_Model.Average_Activation_by_Category_Graph(word_List, file_Save = True, output_File_Name = "1213_Average_Activation_by_Category_Graph.png");
