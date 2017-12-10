@@ -200,12 +200,13 @@ Often, we may want to obtain the RT values for each word in a list, rather than 
 
 ```
 tisk_Model.Run_List(pronunciation_List = ['baks','bar','bark','bat^l','bi'], 
-output_File_Name = "Test", 
-reaction_Time=True)
+                    output_File_Name = "Test", 
+                    reaction_Time=True)
 ```
 
 This will create an output file named "Test_Reaction_Time.txt". Its contents would be:
 
+```
 | Target | Absolute | Relative | Time_Dependent |
 |--------|----------|----------|----------------|
 | baks   | 58       | 40       | 46             |
@@ -213,7 +214,17 @@ This will create an output file named "Test_Reaction_Time.txt". Its contents wou
 | bark   | 74       | 52       | 56             |
 | bat^l  | 60       | 39       | 46             |
 | bi     | nan      | 23       | 13             |
+```
 
+Accuracy is indicated by the value for each word for each accuracy criterion. Items that were correctly recognized according to the criterion will have integer values (cycle at which the criterion was met). Items that were not will have values of "nan" (not a number, a standard designation for a missing value). In the current example, we can see that /bi/ ("bee") did not meet the absolute criterion. 
+
+If you wanted to find obtain the RTs for every word in your lexicon, you would replace the word list with pronunciation_List:
+
+```
+tisk_Model.Run_List(pronunciation_List = pronunciation_List, 
+                    output_File_Name = "all", 
+                    reaction_Time=True)
+```
 
 ## Extract data for multiple words in text files
 ## Getting comprehensive data for every word in the lexicon
