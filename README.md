@@ -205,19 +205,14 @@ reaction_Time=True)
 ```
 
 This will create an output file named "Test_Reaction_Time.txt". Its contents would be:
-Target	Absolute	Relative	Time_Dependent
-baks	58	40	46
-bar	84	28	33
-bark	74	52	56
-bat^l	60	39	46
-bi	nan	23	13
-| Target | Absolute | Relative | Absolute |
-| ------ | -------- | -------- | ---------|
-| baks   | 58       | 40       | 46       |
-| bar    | 84       | 28       | 33       |
-| bark   | 74       | 52       | 56       |
-| bat^l  | 60       | 39       | 46       |
-| bi     | nan      | 23       | 13       |
+
+| Target | Absolute | Relative | Time_Dependent |
+|--------|----------|----------|----------------|
+| baks   | 58       | 40       | 46             |
+| bar    | 84       | 28       | 33             |
+| bark   | 74       | 52       | 56             |
+| bat^l  | 60       | 39       | 46             |
+| bi     | nan      | 23       | 13             |
 
 
 ## Extract data for multiple words in text files
