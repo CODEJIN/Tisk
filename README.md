@@ -299,7 +299,7 @@ rt_and_ACC = tisk_Model.Run_List(
           categorize=True)
 ```
 
-By extension, we can also generate a mean category plot over every word in the lexicon (result shown in Figure 8): 
+By extension, we can also generate a mean category plot over every word in the lexicon: 
 
 ```
 # make a graph for all words in pronunciation_List
