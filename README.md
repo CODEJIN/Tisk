@@ -85,7 +85,6 @@ Here is an example of a basic command that calls a simulation of the word 'pat' 
 ```
 # trigger a simulation without producing output;
 # this prepares a model for inspection
-
 tisk_Model.Display_Graph(pronunciation='pat')
 ```
 
@@ -142,7 +141,6 @@ When this command is executed, the 'result' variable becomes a list with length 
 
 ```
 # trigger a simulation and assign data structures to 'result'
-
 result = tisk_Model.Extract_Data(pronunciation='pat',
             extract_Phoneme_List = [('p', 0), ('a', 1), ('t', 2)],
             extract_Single_Phone_List = ['p', 'a', 't'])
@@ -150,10 +148,78 @@ result = tisk_Model.Extract_Data(pronunciation='pat',
 
 Here, result becomes a list with length 2. The first item is a numpy matrix with the input unit activations for the 3 specified phonemes across the 100 steps of the simulation. The second is a numpy matrix with the activations of the specified single phonemes in the n-phone layer over the 100 steps of the simulation.
 
-
-
 ## Export simulation data to text files
+
+To export results to text files, we add a parameter:
+
+```
+# trigger a simulation and save data structures to text file
+result = tisk_Model.Extract_Data(pronunciation='pat',
+         extract_Word_List = ['pat', 'tap'], file_Save=True)
+```
+
+This creates a text file called "p_a_t.Word.txt". The file has 102 columns and 3 lines. The first line is a header, labeling the columns; the subsequent lines contain the data. The first column is the input string ("p a t"), and the second is the specified word to track (line 2 is "pat" and line 3 is "tap"). Columns 3-102 are activations for the corresponding word in cycles 0-99.
+
 ## Batch simulation of multiple words
+```
+# get mean RT and accuracy for the specified set of words
+rt_and_ACC = tisk_Model.Run_List(pronunciation_List = ['baks','bar','bark','bat^l','bi'])
+```
+Given this command, the model will simulate the 5 words and check the reaction time (RT) and accuracy for each. The variable 'acc_and_RT' will be a list of 6 items, with mean RT and accuracy for the specified words computed using three different methods (abs = based on an absolute threshold [target must exceed threshold], rel = relative threshold [target must exceed next most active item by threshold], tim = time-based threshold [target must exceed next most active item by threshold for at least a specified number of cycles]):
+
+```
+rt_and_ACC[0]: Mean of RT~abs~
+rt_and_ACC[1]: Mean of ACC~abs~
+rt_and_ACC[2]: Mean of RT~rel~
+rt_and_ACC[3]: Mean of ACC~rel~
+rt_and_ACC[4]: Mean of RT~tim~
+rt_and_ACC[5]: Mean of ACC~tim~
+```
+
+More commonly, one might want to evaluate mean accuracy and RT for every word in the current lexicon with the current parameter settings. The following command would do this, where we specify the pronunciation_List to be the full pronunciation_List: 
+
+```
+# get mean RT and accuracy for all words in pronunciation_List
+rt_and_ACC = tisk_Model.Run_List(
+          pronunciation_List = pronunciation_List)
+```
+
+The parameters used for the different accuracy methods can also be modified. The default criteria are: abs = 0.75, rel = 0.05, tim = 10 (time steps). These criteria refer to absolute activation values (to "win", a target's activation must exceed 0.75), relative activation values (to win, the target's activation must exceed all other words' activations by at least 0.05, and time steps (to win, the target must have the highest activation, and its activation must exceed that of all other words' activations for at least 10 time steps). Here is an example where the criteria for each accuracy method are specified:
+
+```
+# get mean RT and accuracy for specified word list with 
+# specified accuracy criteria for abs, rel, and tim, respectively
+rt_and_ACC = tisk_Model.Run_List(
+        pronunciation_List = ['baks','bar','bark','bat^l','bi'],
+        absolute_Acc_Criteria=0.6,
+        relative_Acc_Criteria=0.01,
+        time_Acc_Criteria=5)
+```
+
+Often, we may want to obtain the RT values for each word in a list, rather than the mean values. We can do this using the reaction_Time flag with the Run_List procedure. Currently, this requires you to specify a file to write the data to (which could be read back in using standard Python techniques): 
+
+```
+tisk_Model.Run_List(pronunciation_List = ['baks','bar','bark','bat^l','bi'], 
+output_File_Name = "Test", 
+reaction_Time=True)
+```
+
+This will create an output file named "Test_Reaction_Time.txt". Its contents would be:
+Target	Absolute	Relative	Time_Dependent
+baks	58	40	46
+bar	84	28	33
+bark	74	52	56
+bat^l	60	39	46
+bi	nan	23	13
+| Target | Absolute | Relative | Absolute |
+| ------ | -------- | -------- | ---------|
+| baks   | 58       | 40       | 46       |
+| bar    | 84       | 28       | 33       |
+| bark   | 74       | 52       | 56       |
+| bat^l  | 60       | 39       | 46       |
+| bi     | nan      | 23       | 13       |
+
+
 ## Extract data for multiple words in text files
 ## Getting comprehensive data for every word in the lexicon
 ## Batch size control
