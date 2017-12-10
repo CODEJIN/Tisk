@@ -358,24 +358,24 @@ length5_Pronunciation_List = [x for x in pronunciation_List if len(x) == 5]
 
 # make a graph of average competitor effects for 3-phoneme words
 tisk_Model.Average_Activation_by_Category_Graph(
-pronunciation_List = length3_Pronunciation_List)
+          pronunciation_List = length3_Pronunciation_List)
 
 # make a graph and also save to a PNG file
 tisk_Model.Average_Activation_by_Category_Graph(
-pronunciation_List= length3_Pronunciation_List,
-file_Save=True,
-output_File_Name='length_3_category_results.png')
+          pronunciation_List= length3_Pronunciation_List,
+          file_Save=True,
+          output_File_Name='length_3_category_results.png')
 
 # make a graph and also save to a PNG file
 tisk_Model.Average_Activation_by_Category_Graph(
-pronunciation_List= length5_Pronunciation_List,
-file_Save=True,
-output_File_Name= 'length_5_category_results.png')
+          pronunciation_List= length5_Pronunciation_List,
+          file_Save=True,
+          output_File_Name= 'length_5_category_results.png')
 
 # save the length 3 data
 tisk_Model.Run_List( pronunciation_List = length3_Pronunciation_List, 
-output_File_Name='length3data', 
-raw_Data = True, categorize = True)
+          output_File_Name='length3data', 
+          raw_Data = True, categorize = True)
 ```
 
 Note that when you save data to text files, if you leave out the " categorize = True " argument, the file with word results will include the over time results for every target in pronunciation list. The first column will list the target, the second column the time step, and then there will be 1 column for every word in the lexicon (i.e., with the activation of that word given the current target at the specified time step).
@@ -389,7 +389,7 @@ filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 3 and 
 
 # make a graph
 tisk_Model.Average_Activation_by_Category_Graph(
-pronunciation_List = filtered_Pronunciation_List)
+           pronunciation_List = filtered_Pronunciation_List)
 
 # select words with length greater than or equal to 2 with 
 # phoneme /a/ in position 2 and phoneme /k/ in position 3
