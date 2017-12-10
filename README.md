@@ -80,7 +80,78 @@ tisk_Model.Parameter_Display()
 ```
 
 ## Simulate processing of a phoneme string and graph results for phonemes and words
-## Extract simulation data to a numpy matrix 
+Here is an example of a basic command that calls a simulation of the word 'pat' (technically, it is more correct to say "a simulation of the pronunciation 'pat'", since the user can specify pronunciations that are not in the lexicon [i.e., the pronunciation_List]):
+
+```
+# trigger a simulation without producing output;
+# this prepares a model for inspection
+
+tisk_Model.Display_Graph(pronunciation='pat')
+```
+
+On its own, this command doesn't do anything apparent to the user (though the simulation is in fact conducted). To create a graph that is displayed within an IDE, add arguments to display specific phonemes:
+
+```
+# trigger a simulation and create a phoneme input graph
+tisk_Model.Display_Graph(
+           pronunciation='pat',
+           display_Phoneme_List = [('p', 0), ('a', 1), ('t', 2)])
+```
+
+This code means "input the pronunciation /pat/, and export a graph with phoneme activations for /p/, /a/, and /t/ in the first, second, and third positions, respectively".
+
+We can extend this to create activation graphs of diphones, single phones, and words. The following example creates one of each:
+
+```
+# trigger a simulation and make 3 graphs
+tisk_Model.Display_Graph(pronunciation='pat',
+                         display_Diphone_List = ['pa', 'pt', 'ap'],
+                         display_Single_Phone_List = ['p', 'a', 't'],
+                         display_Word_List = ['pat', 'tap'])
+```
+
+To export the graphs in a standard graphics format (PNG), simply add one more argument to the command:
+ 
+```
+# trigger a simulation, make 3 graphs, save them as PNG files
+tisk_Model.Display_Graph(pronunciation='pat',
+                         display_Diphone_List = ['pa', 'pt', 'ap'],
+                         display_Single_Phone_List = ['p', 'a', 't'],
+                         display_Word_List = ['pat', 'tap'],
+                         file_Save = True)
+```
+
+## Extract simulation data to a numpy matrix
+
+The basic method for extracting data as a numpy matrix is as follows:
+```
+# trigger a simulation and ready data structures
+# without creating any output
+tisk_Model.Extract_Data(pronunciation='pat')
+```
+
+The method is similar to the graphing functions. The code above is the core command that readies appropriate structures for extraction, but it does not by itself generate any result for the user. To extract data, arguments specifying the details desired are required. For example, to get data corresponding to the word plot above (showing the activations of /pat/ and /tap/ given the input /pat/), the following command would put the data in a numpy matrix called 'result':
+
+```
+# trigger a simulation and assign data structures to 'result'
+result = tisk_Model.Extract_Data(pronunciation='pat',
+                                 extract_Word_List = ['pat', 'tap'])
+```
+
+When this command is executed, the 'result' variable becomes a list with length 1, consisting of a single numpy matrix with shape (2, 100). The first and second rows are the activation patterns of the word units for /pat/ and /tap/, respectively.
+
+```
+# trigger a simulation and assign data structures to 'result'
+
+result = tisk_Model.Extract_Data(pronunciation='pat',
+            extract_Phoneme_List = [('p', 0), ('a', 1), ('t', 2)],
+            extract_Single_Phone_List = ['p', 'a', 't'])
+```
+
+Here, result becomes a list with length 2. The first item is a numpy matrix with the input unit activations for the 3 specified phonemes across the 100 steps of the simulation. The second is a numpy matrix with the activations of the specified single phonemes in the n-phone layer over the 100 steps of the simulation.
+
+
+
 ## Export simulation data to text files
 ## Batch simulation of multiple words
 ## Extract data for multiple words in text files
