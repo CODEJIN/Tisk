@@ -170,12 +170,12 @@ rt_and_ACC = tisk_Model.Run_List(pronunciation_List = ['baks','bar','bark','bat^
 Given this command, the model will simulate the 5 words and check the reaction time (RT) and accuracy for each. The variable 'acc_and_RT' will be a list of 6 items, with mean RT and accuracy for the specified words computed using three different methods (abs = based on an absolute threshold [target must exceed threshold], rel = relative threshold [target must exceed next most active item by threshold], tim = time-based threshold [target must exceed next most active item by threshold for at least a specified number of cycles]):
 
 ```
-rt_and_ACC[0]: Mean of RT~abs~
-rt_and_ACC[1]: Mean of ACC~abs~
-rt_and_ACC[2]: Mean of RT~rel~
-rt_and_ACC[3]: Mean of ACC~rel~
-rt_and_ACC[4]: Mean of RT~tim~
-rt_and_ACC[5]: Mean of ACC~tim~
+rt_and_ACC[0]: Mean of RT of abs
+rt_and_ACC[1]: Mean of ACC of abs
+rt_and_ACC[2]: Mean of RT of rel
+rt_and_ACC[3]: Mean of ACC of rel
+rt_and_ACC[4]: Mean of RT of tim
+rt_and_ACC[5]: Mean of ACC of tim
 ```
 
 More commonly, one might want to evaluate mean accuracy and RT for every word in the current lexicon with the current parameter settings. The following command would do this, where we specify the pronunciation_List to be the full pronunciation_List: 
@@ -306,7 +306,7 @@ By extension, we can also generate a mean category plot over every word in the l
 ```
 # make a graph for all words in pronunciation_List
 tisk_Model.Average_Activation_by_Category_Graph(
-pronunciation_List = pronunciation_List)
+          pronunciation_List = pronunciation_List)
 ```
 
 ## Batch size control
