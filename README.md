@@ -347,6 +347,49 @@ Alternatively, we could get all accuracy and RT values for a specific word by us
 rt_and_ACC = tisk_Model.Run_List(pronunciation_List = ['pat'])
 ```
 
+## Competitor check
+Sometime, you want to know that there are how many or what competitors. 
+
+```
+# Getting the competitor information
+competitor_List = tisk_Model.Category_List('b^s')
+```
+
+When you use this command, model will return four lists. Each list contains the cohorts, rhyme, embedding, and other words, respectively.
+
+```
+competitor_List[0]: cohort list
+competitor_List[1]: rhyme list
+competitor_List[2]: embedding list
+competitor_List[3]: other list
+```
+
+After getting the competior_List, to see the competitor information, type the following command:
+
+```
+# Display cohort list
+print(competitor_List[0])
+
+# Display rhyme count
+print(len(competitor_List[1]))
+```
+
+On the other hand, you might want to know how many competitors are affect the simulation result about the pronunciation list, not a single word. To know that, you can use the following:
+
+```
+# Display the averaged competitor count
+tisk_Model.Display_Averaged_Category_Count(pronunciation_List)
+```
+
+This command shows the averaged count of competitors of inserted pronunciation list like following:
+
+```
+Averaged cohort count: 4.33018867925
+Averaged rhyme count: 1.08490566038
+Averaged embedding count: 1.25943396226
+Averaged other count: 204.622641509
+```
+
 ## More complex simulations
 
 Since TISK is implemented as a Python class, the user can do arbitrarily complex simulations by writing Python scripts. Doing this may require the user to acquire expertise in Python that is beyond the scope of this short introductory guide. However, to illustrate how one might do this, we include one full, realistic example here. In this example, we will compare competitor effects as a function of word length, by comparing competitor effects for words that are 3 phonemes long vs. words that are 5 phonemes long. All explanations are embedded as comments (preceded by "#") in the code below:
@@ -396,6 +439,9 @@ tisk_Model.Average_Activation_by_Category_Graph(
 # select words with length greater than or equal to 2 with 
 # phoneme /a/ in position 2 and phoneme /k/ in position 3
 filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 4 and x[2] == 'a' and x[3]=='k']
+
+# check competitor count of filtered list 
+tisk_Model.Display_Averaged_Category_Count(filtered_Pronunciation_List)
 ```
 
 # Reporting Issues
