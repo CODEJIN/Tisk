@@ -12,6 +12,9 @@ import Basic_TISK_Class as tisk
 
 # load the phoneme and pronunciation [word] lists and prepare appropriate connections
 phoneme_List, pronunciation_List = tisk.List_Generate()
+#you can change the lexicon file by assigning the parameter 'pronunciation_File'.
+phoneme_List, pronunciation_List = tisk.List_Generate(pronunciation_File = 'pronunciation_Data.txt')
+
 
 # initialize the model with the the phoneme_List, pronunciation_List, number of time slots, and threshold
 tisk_Model = tisk.TISK_Model(phoneme_List, pronunciation_List,
@@ -175,6 +178,18 @@ tim_RT = tisk_Model.RT_Time_Dependent(
 rt_and_ACC = tisk_Model.Run_List(pronunciation_List = ['pat'])
 
 
+# Getting the competitor information
+competitor_List = tisk_Model.Category_List('b^s')
+
+# Display cohort list
+print(competitor_List[0])
+
+# Display rhyme count
+print(len(competitor_List[1]))
+
+# Display the averaged competitor count
+tisk_Model.Display_Averaged_Category_Count(pronunciation_List)
+
 
 # first, select all words that have length 3 in the lexicon
 length3_Pronunciation_List = [x for x in pronunciation_List if len(x) == 3]
@@ -215,3 +230,6 @@ tisk_Model.Average_Activation_by_Category_Graph(
 # select words with length greater than or equal to 2 with
 # phoneme /a/ in position 2 and phoneme /k/ in position 3
 filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 4 and x[2] == 'a' and x[3]=='k']
+
+# check competitor count of filtered list
+tisk_Model.Display_Averaged_Category_Count(filtered_Pronunciation_List)
