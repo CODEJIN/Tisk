@@ -188,7 +188,7 @@ print(competitor_List[0])
 print(len(competitor_List[1]))
 
 # Display the averaged competitor count
-tisk_Model.Display_Averaged_Category_Count(pronunciation_List)
+tisk_Model.Display_Mean_Category_Count(pronunciation_List)
 
 
 # first, select all words that have length 3 in the lexicon
@@ -232,4 +232,4 @@ tisk_Model.Average_Activation_by_Category_Graph(
 filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 4 and x[2] == 'a' and x[3]=='k']
 
 # check competitor count of filtered list
-tisk_Model.Display_Averaged_Category_Count(filtered_Pronunciation_List)
+tisk_Model.Display_Mean_Category_Count(filtered_Pronunciation_List)

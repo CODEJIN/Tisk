@@ -606,7 +606,7 @@ class TISK_Model:
 
         return cohort_List, rhyme_List, embedding_List, other_List;
 
-    def Display_Averaged_Category_Count(self, pronunciation_List):
+    def Display_Mean_Category_Count(self, pronunciation_List):
         cohort_Count_List = [];
         rhyme_Count_List = [];
         embedding_Count_List = [];
@@ -619,10 +619,10 @@ class TISK_Model:
             embedding_Count_List.append(len(embedding_List));
             other_Count_List.append(len(other_List));
 
-        print("Averaged cohort count:", np.mean(cohort_Count_List));
-        print("Averaged rhyme count:", np.mean(rhyme_Count_List));
-        print("Averaged embedding count:", np.mean(embedding_Count_List));
-        print("Averaged other count:", np.mean(other_Count_List));
+        print("Mean cohort count:", np.mean(cohort_Count_List));
+        print("Mean rhyme count:", np.mean(rhyme_Count_List));
+        print("Mean embedding count:", np.mean(embedding_Count_List));
+        print("Mean other count:", np.mean(other_Count_List));
 
     def Display_Graph(self, pronunciation, activation_Ratio_Dict = {}, display_Phoneme_List = None, display_Diphone_List = None, display_Single_Phone_List = None, display_Word_List = None, file_Save = False):
         """
