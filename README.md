@@ -1,6 +1,10 @@
-# Tisk 1.x Distribution
+# TISK 1.x Distribution
 
 This code is to run a TISK model on Python 3.x.
+
+TISK is the Time Invariant String Model of (human) spoken word recognition, first reported by [Hannagan, Magnuson, & Grainger (2013).](https://www.frontiersin.org/articles/10.3389/fpsyg.2013.00563/full "Hannagan, Magnuson, & Grainger 2013)
+
+
 
 # Files
 There are three files in TISK 1.x.
