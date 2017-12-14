@@ -20,21 +20,17 @@ Hannagan et al. demonstrated that TISK exhibits extremely similar over-time dyna
 
 However, TISK has not been applied to the same range of phenomena as TRACE. We hope that making this implementation publicly available will help promote extensive testing of TISK. 
 
-# Files
-There are three files in TISK 1.x.
-
-```
-Basic_TISK_Class.py
-Phoneme_Data.txt
-Pronunciation.txt
-```
-
-# Pre-installed
-
-This code require 'numpy', 'matplotlib' modules.
+# TISK quickstart
+Prerequisites: two modules.
 ```
 pip install numpy
 pip install matplotlab
+```
+Download or clone this repository. You will need 3 files to get started. 
+```
+Basic_TISK_Class.py
+Phoneme_Data.txt    # 
+Pronunciation.txt
 ```
 
 # TISK 1.0 code example
