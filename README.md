@@ -21,28 +21,47 @@ Hannagan et al. demonstrated that TISK exhibits extremely similar over-time dyna
 However, TISK has not been applied to the same range of phenomena as TRACE. We hope that making this implementation publicly available will help promote extensive testing of TISK. 
 
 # TISK quickstart
-Prerequisites: two modules.
+
+## Prerequisites: two modules.
+
 ```
 pip install numpy
 pip install matplotlab
 ```
+
+## TISK files
 Download or clone this repository. You will need 3 files to get started. 
 ```
-Basic_TISK_Class.py
-Phoneme_Data.txt    # 
-Pronunciation.txt
+Basic_TISK_Class.py    # core TISK functions
+Phoneme_Data.txt       # Phonemes used (optional; TISK generates this based on lexicon if not included)
+Pronunciation_Data.txt # original TRACE 211-word lexicon
 ```
 
-# TISK 1.0 code example
 ## Running TISK
-### Preliminary steps
 The following commands prepare TISK for simulations. Lines preceded by "#" are comments and can be skipped.
 ```
 # load the TISK functions
 import Basic_TISK_Class as tisk
 
+# intialize the model
+tisk_Model = tisk.TISK_Model(phoneme_List, pronunciation_List)
+
+# run a simulation and generate some graphs
+tisk_Model.Display_Graph(pronunciation='pat',
+                         display_Diphone_List = ['pa', 'pt', 'ap'],
+                         display_Single_Phone_List = ['p', 'a', 't'],
+                         display_Word_List = ['pat', 'tap'])
+```
+
+# TISK: a tutorial introduction
+
+## Preliminary steps
+```
+# load the TISK functions
+import Basic_TISK_Class as tisk
+
 # load the phoneme and pronunciation [word] lists and 
-#prepare appropriate connections
+# prepare appropriate connections
 phoneme_List, pronunciation_List = tisk.List_Generate()
 
 # initialize the model with the the phoneme_List, 
@@ -50,15 +69,20 @@ phoneme_List, pronunciation_List = tisk.List_Generate()
 tisk_Model = tisk.TISK_Model(phoneme_List, pronunciation_List,
                              time_Slots = 10,
                              nPhone_Threshold = 0.91)
+
+# OR you can load an alternative lexicon file by specifying a 
+# filename in the generate command::
+phoneme_List, pronunciation_List = tisk.List_Generate(
+                             pronunciation_File = other_lexicon.txt')
+
 ```
-### Initialize and / or modify parameters
+## Initialize and / or modify parameters
 
 Before running simulations, you must initialize the parameters. To use the default parameters of TISK 1.0 (Hannagan et al., 2013), just enter: 
 ```
 # initialize the model with default or current parameters
 tisk_Model.Weight_Initialize()
 ```
-
 The model does not automatically initialize because this is the step where all connections are made, etc., and initialization can take a long time for a large model with thousands of words. To control specific categories of parameters or specific parameters, use the following examples: 
 ```
 # change selected TISK parameters
@@ -255,7 +279,7 @@ rt_and_ACC = tisk_Model.Run_List(
         categorize=True)
 ```
 
-When we run this code, we get text files with what we call 'raw' and 'category' outputs. Raw files (e.g., for this example, Result_Word_Activation_Data.txt) contain the activations for every word in the lexicon at every time step for each target specified. The file format is very simple. There is a 1-line header with column labels. The first column is 'target', the second is 'word', and the following columns are cycles 0-C, where C is the final cycle (which will have the value [(time_Slots x IStep_Length) -1].
+When we run this code, we get text files with what we call 'raw' and 'category' outputs. Raw files (e.g., for this example, Result_Word_Activation_Data.txt) contain the activations for every word in the lexicon at every time step for each target specified. The file format is very simple. There is a 1-line header with column labels. The first column is 'target', the second is 'word', and the following columns are cycles 0-C, where C is the final cycle (which will have the value [(time_Slots x IStep_Length) -1]).
 
 You can also make graphs that correspond to the category data. For example, let's plot the category data for /baks/. 
 
@@ -323,6 +347,52 @@ tisk_Model.Average_Activation_by_Category_Graph(
           pronunciation_List = pronunciation_List)
 ```
 
+## Competitor details
+
+You may wnat to know more about the details of the competitors for a specific word. TISK includes special commands for doing this. 
+
+```
+# Getting the competitor information
+competitor_List = tisk_Model.Category_List('b^s')
+```
+
+When you use this command, the model will return four lists. The lists contain the cohorts, rhyme, embedding, and other words, respectively.
+```
+competitor_List[0]: cohort list
+competitor_List[1]: rhyme list
+competitor_List[2]: embedding list
+competitor_List[3]: other list
+```
+
+To see the contents of competior_List, ,use the following sorts of command:
+```
+# Display cohort list
+print(competitor_List[0])
+```
+
+To see the count of a competitor type, get the length of a specific list:
+
+```
+# Display rhyme count
+print(len(competitor_List[1]))
+```
+
+You can also inspect the details of the competitors for a list of words, rather than a single word:
+
+```
+# Display the mean competitor count
+tisk_Model.Display_Mean_Category_Count(pronunciation_List)
+```
+
+This command will display the mean number of each competitor type for the specified word list. The preceding command would display the results for the full default lexicon, as follows:
+
+```
+Mean cohort count: 4.33018867925
+Mean rhyme count: 1.08490566038
+Mean embedding count: 1.25943396226
+Mean other count: 204.622641509
+```
+
 ## Batch size control
 
 Depending on the size of your lexicon and the memory available on your computer, you may see the 'Memory Error' message when you run batch mode. Batch-mode simulation is not possible if the memory of the machine is too small to handle the size of the batch. To resolve this, you can use the batch_Size parameter to reduce the size of the batch. This parameter determines how many word simulations are conducted in parallel. It only controls the batch size, and does not affect any result. You will get the same result with any batch size your computer's memory can handle. The default value is 100. To see whether your computer memory can handle it, you can test larger values. 
@@ -361,49 +431,6 @@ Alternatively, we could get all accuracy and RT values for a specific word by us
 rt_and_ACC = tisk_Model.Run_List(pronunciation_List = ['pat'])
 ```
 
-## Competitor check
-Sometime, you want to know that there are how many or what competitors. 
-
-```
-# Getting the competitor information
-competitor_List = tisk_Model.Category_List('b^s')
-```
-
-When you use this command, model will return four lists. Each list contains the cohorts, rhyme, embedding, and other words, respectively.
-
-```
-competitor_List[0]: cohort list
-competitor_List[1]: rhyme list
-competitor_List[2]: embedding list
-competitor_List[3]: other list
-```
-
-After getting the competior_List, to see the competitor information, type the following command:
-
-```
-# Display cohort list
-print(competitor_List[0])
-
-# Display rhyme count
-print(len(competitor_List[1]))
-```
-
-On the other hand, you might want to know how many competitors are affect the simulation result about the pronunciation list, not a single word. To know that, you can use the following:
-
-```
-# Display the averaged competitor count
-tisk_Model.Display_Mean_Category_Count(pronunciation_List)
-```
-
-This command shows the averaged count of competitors of inserted pronunciation list like following:
-
-```
-Averaged cohort count: 4.33018867925
-Averaged rhyme count: 1.08490566038
-Averaged embedding count: 1.25943396226
-Averaged other count: 204.622641509
-```
-
 ## More complex simulations
 
 Since TISK is implemented as a Python class, the user can do arbitrarily complex simulations by writing Python scripts. Doing this may require the user to acquire expertise in Python that is beyond the scope of this short introductory guide. However, to illustrate how one might do this, we include one full, realistic example here. In this example, we will compare competitor effects as a function of word length, by comparing competitor effects for words that are 3 phonemes long vs. words that are 5 phonemes long. All explanations are embedded as comments (preceded by "#") in the code below:
@@ -439,6 +466,17 @@ tisk_Model.Run_List( pronunciation_List = length3_Pronunciation_List,
 
 Note that when you save data to text files, if you leave out the " categorize = True " argument, the file with word results will include the over time results for every target in pronunciation list. The first column will list the target, the second column the time step, and then there will be 1 column for every word in the lexicon (i.e., with the activation of that word given the current target at the specified time step).
 
+We might want to know if differences between the word lengths are due to differences in the dynamics of activation and competition, or a confound of number of competitors with word length. To check this possibility, we can display the mean competitor counts.
+
+```
+# check competitor counts of length 3 and length 5 lists
+tisk_Model.Display_Mean_Category_Count(
+length3_Pronunciation_List)
+
+tisk_Model.Display_Mean_Category_Count(
+length3_Pronunciation_List)
+```
+
 Of course, this example just scratches the surface of what is possible since TISK is embedded within a complete scripting language. Using standard Python syntax, we can easily filter words by specifying arbitrarily complex conditions. Here are some examples:
 
 ```
@@ -450,9 +488,9 @@ filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 3 and 
 tisk_Model.Average_Activation_by_Category_Graph(
            pronunciation_List = filtered_Pronunciation_List)
 
-# select words with length greater than or equal to 2 with 
+# select words with length greater than or equal to 3 with 
 # phoneme /a/ in position 2 and phoneme /k/ in position 3
-filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 4 and x[2] == 'a' and x[3]=='k']
+filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 3 and x[2] == 'a' and x[3]=='k']
 
 # check competitor count of filtered list 
 tisk_Model.Display_Mean_Category_Count(filtered_Pronunciation_List)
@@ -464,4 +502,4 @@ If you suspect that a bug has caused a malfunction while using the program, plea
 
 https://github.com/CODEJIN/Tisk/issues
 
-However, the current status of this project is occasional management. Therefore, it is difficult to respond promptly to reported issues. Thank you for your understanding.
+We may not be able to respond promptly to issues because this is outside our normal job duties. However, we will attend to issues as soon as we can! Thank you for your understanding.
