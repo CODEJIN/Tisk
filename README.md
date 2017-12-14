@@ -378,7 +378,7 @@ On the other hand, you might want to know how many competitors are affect the si
 
 ```
 # Display the averaged competitor count
-tisk_Model.Display_Averaged_Category_Count(pronunciation_List)
+tisk_Model.Display_Mean_Category_Count(pronunciation_List)
 ```
 
 This command shows the averaged count of competitors of inserted pronunciation list like following:
@@ -441,7 +441,7 @@ tisk_Model.Average_Activation_by_Category_Graph(
 filtered_Pronunciation_List = [x for x in pronunciation_List if len(x) >= 4 and x[2] == 'a' and x[3]=='k']
 
 # check competitor count of filtered list 
-tisk_Model.Display_Averaged_Category_Count(filtered_Pronunciation_List)
+tisk_Model.Display_Mean_Category_Count(filtered_Pronunciation_List)
 ```
 
 # Reporting Issues
