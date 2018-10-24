@@ -280,17 +280,17 @@ class TISK_Model:
             location_Input[0, slot_Index*self.phoneme_Amount:(slot_Index+1)*self.phoneme_Amount] = 1;
             #Time control (The current phoneme location of pronunication)
             for step_Index in range(self.parameter_Dict["iStep"]):
-                phoneme_Layer_Stroage = (using_Pattern * location_Input) * self.parameter_Dict[("Weight", "Input_to_Phoneme")];
-                diphone_Layer_Stroage = phoneme_Layer_Activation.dot(gate_Phoneme_to_Diphone * self.weightMatrix_Phoneme_to_Diphone)
-                diphone_Layer_Stroage = np.sign((np.sign(diphone_Layer_Stroage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Diphone);  #Binary + Feedback
-                single_Phone_Layer_Stroage = phoneme_Layer_Activation.dot(self.weightMatrix_Phoneme_to_Single_Phone);
-                single_Phone_Layer_Stroage = np.sign((np.sign(single_Phone_Layer_Stroage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Single_Phone);  #Binary + Feedback
-                word_Layer_Stroage = diphone_Layer_Activation.dot(self.weightMatrix_Diphone_to_Word) + single_Phone_Layer_Activation.dot(self.weightMatrix_Single_Phone_to_Word) + word_Layer_Activation.dot(self.weightMatrix_Word_to_Word);
+                phoneme_Layer_Storage = (using_Pattern * location_Input) * self.parameter_Dict[("Weight", "Input_to_Phoneme")];
+                diphone_Layer_Storage = phoneme_Layer_Activation.dot(gate_Phoneme_to_Diphone * self.weightMatrix_Phoneme_to_Diphone)
+                diphone_Layer_Storage = np.sign((np.sign(diphone_Layer_Storage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Diphone);  #Binary + Feedback
+                single_Phone_Layer_Storage = phoneme_Layer_Activation.dot(self.weightMatrix_Phoneme_to_Single_Phone);
+                single_Phone_Layer_Storage = np.sign((np.sign(single_Phone_Layer_Storage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Single_Phone);  #Binary + Feedback
+                word_Layer_Storage = diphone_Layer_Activation.dot(self.weightMatrix_Diphone_to_Word) + single_Phone_Layer_Activation.dot(self.weightMatrix_Single_Phone_to_Word) + word_Layer_Activation.dot(self.weightMatrix_Word_to_Word);
 
-                phoneme_Layer_Activation = np.clip(phoneme_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Phoneme")]) - np.abs(phoneme_Layer_Stroage) * phoneme_Layer_Activation + phoneme_Layer_Stroage.clip(min=0), 0, 1);
-                diphone_Layer_Activation = np.clip(diphone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Diphone")]) - np.abs(diphone_Layer_Stroage) * diphone_Layer_Activation + diphone_Layer_Stroage.clip(min=0), 0, 1);
-                single_Phone_Layer_Activation = np.clip(single_Phone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "SPhone")]) - np.abs(single_Phone_Layer_Stroage) * single_Phone_Layer_Activation + single_Phone_Layer_Stroage.clip(min=0), 0, 1);
-                word_Layer_Activation = np.clip(word_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Word")]) - np.abs(word_Layer_Stroage) * word_Layer_Activation + word_Layer_Stroage.clip(min=0), 0, 1);
+                phoneme_Layer_Activation = np.clip(phoneme_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Phoneme")]) - np.abs(phoneme_Layer_Storage) * phoneme_Layer_Activation + phoneme_Layer_Storage.clip(min=0), 0, 1);
+                diphone_Layer_Activation = np.clip(diphone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Diphone")]) - np.abs(diphone_Layer_Storage) * diphone_Layer_Activation + diphone_Layer_Storage.clip(min=0), 0, 1);
+                single_Phone_Layer_Activation = np.clip(single_Phone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "SPhone")]) - np.abs(single_Phone_Layer_Storage) * single_Phone_Layer_Activation + single_Phone_Layer_Storage.clip(min=0), 0, 1);
+                word_Layer_Activation = np.clip(word_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Word")]) - np.abs(word_Layer_Storage) * word_Layer_Activation + word_Layer_Storage.clip(min=0), 0, 1);
 
                 phoneme_Activation_Cycle_List.append(phoneme_Layer_Activation.ravel());
                 diphone_Activation_Cycle_List.append(diphone_Layer_Activation.ravel());
@@ -345,18 +345,18 @@ class TISK_Model:
             location_Input[:, slot_Index*self.phoneme_Amount:(slot_Index+1)*self.phoneme_Amount] = 1;
             #Time control (The current phoneme location of pronunication)
             for step_Index in range(self.parameter_Dict["iStep"]):
-                phoneme_Layer_Stroage = (using_Pattern * location_Input) * self.parameter_Dict[("Weight", "Input_to_Phoneme")];
+                phoneme_Layer_Storage = (using_Pattern * location_Input) * self.parameter_Dict[("Weight", "Input_to_Phoneme")];
                 gated_WeightMatrix_Phoneme_to_Diphone = gate_Phoneme_to_Diphone * self.weightMatrix_Phoneme_to_Diphone;
-                diphone_Layer_Stroage = np.vstack([np.dot(phoneme_Layer_Activation[[x]], gated_WeightMatrix_Phoneme_to_Diphone[x]) for x in range(len(pronunciation_List))]);   #Because weight is 3D.
-                diphone_Layer_Stroage = np.sign((np.sign(diphone_Layer_Stroage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Diphone);  #Binary + Feedback
-                single_Phone_Layer_Stroage = phoneme_Layer_Activation.dot(self.weightMatrix_Phoneme_to_Single_Phone);
-                single_Phone_Layer_Stroage = np.sign((np.sign(single_Phone_Layer_Stroage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Single_Phone);  #Binary + Feedback
-                word_Layer_Stroage = diphone_Layer_Activation.dot(self.weightMatrix_Diphone_to_Word) + single_Phone_Layer_Activation.dot(self.weightMatrix_Single_Phone_to_Word) + word_Layer_Activation.dot(self.weightMatrix_Word_to_Word);
+                diphone_Layer_Storage = np.vstack([np.dot(phoneme_Layer_Activation[[x]], gated_WeightMatrix_Phoneme_to_Diphone[x]) for x in range(len(pronunciation_List))]);   #Because weight is 3D.
+                diphone_Layer_Storage = np.sign((np.sign(diphone_Layer_Storage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Diphone);  #Binary + Feedback
+                single_Phone_Layer_Storage = phoneme_Layer_Activation.dot(self.weightMatrix_Phoneme_to_Single_Phone);
+                single_Phone_Layer_Storage = np.sign((np.sign(single_Phone_Layer_Storage - self.parameter_Dict["nPhone_Threshold"]) + 1) /2) / 10 + word_Layer_Activation.dot(self.weightMatrix_Word_to_Single_Phone);  #Binary + Feedback
+                word_Layer_Storage = diphone_Layer_Activation.dot(self.weightMatrix_Diphone_to_Word) + single_Phone_Layer_Activation.dot(self.weightMatrix_Single_Phone_to_Word) + word_Layer_Activation.dot(self.weightMatrix_Word_to_Word);
 
-                phoneme_Layer_Activation = np.clip(phoneme_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Phoneme")]) - np.abs(phoneme_Layer_Stroage) * phoneme_Layer_Activation + phoneme_Layer_Stroage.clip(min=0), 0, 1);
-                diphone_Layer_Activation = np.clip(diphone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Diphone")]) - np.abs(diphone_Layer_Stroage) * diphone_Layer_Activation + diphone_Layer_Stroage.clip(min=0), 0, 1);
-                single_Phone_Layer_Activation = np.clip(single_Phone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "SPhone")]) - np.abs(single_Phone_Layer_Stroage) * single_Phone_Layer_Activation + single_Phone_Layer_Stroage.clip(min=0), 0, 1);
-                word_Layer_Activation = np.clip(word_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Word")]) - np.abs(word_Layer_Stroage) * word_Layer_Activation + word_Layer_Stroage.clip(min=0), 0, 1);
+                phoneme_Layer_Activation = np.clip(phoneme_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Phoneme")]) - np.abs(phoneme_Layer_Storage) * phoneme_Layer_Activation + phoneme_Layer_Storage.clip(min=0), 0, 1);
+                diphone_Layer_Activation = np.clip(diphone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Diphone")]) - np.abs(diphone_Layer_Storage) * diphone_Layer_Activation + diphone_Layer_Storage.clip(min=0), 0, 1);
+                single_Phone_Layer_Activation = np.clip(single_Phone_Layer_Activation * (1 - self.parameter_Dict[("Decay", "SPhone")]) - np.abs(single_Phone_Layer_Storage) * single_Phone_Layer_Activation + single_Phone_Layer_Storage.clip(min=0), 0, 1);
+                word_Layer_Activation = np.clip(word_Layer_Activation * (1 - self.parameter_Dict[("Decay", "Word")]) - np.abs(word_Layer_Storage) * word_Layer_Activation + word_Layer_Storage.clip(min=0), 0, 1);
 
                 phoneme_Activation_Cycle_List.append(phoneme_Layer_Activation);
                 diphone_Activation_Cycle_List.append(diphone_Layer_Activation);
